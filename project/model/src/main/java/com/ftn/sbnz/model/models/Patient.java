@@ -1,10 +1,12 @@
 package com.ftn.sbnz.model.models;
 
+import com.ftn.sbnz.model.enums.ConsciousnessLevel;
+
 public class Patient {
     private Long id;
     private int age;
     private String name;
-    private boolean conscious;
+    private ConsciousnessLevel consciousnessLevel;
     private boolean hasDiabetes;
     private boolean hasHemophilia;
     private boolean hasArrhythmia;
@@ -16,7 +18,7 @@ public class Patient {
     public Patient(Long id,
                    String name,
                    int age,
-                   boolean conscious,
+                   ConsciousnessLevel consciousnessLevel,
                    boolean hasDiabetes,
                    boolean hasHemophilia,
                    boolean hasArrhythmia,
@@ -25,7 +27,7 @@ public class Patient {
         this.id = id;
         this.name = name;
         this.age = age;
-        this.conscious = conscious;
+        this.consciousnessLevel = consciousnessLevel;
         this.hasDiabetes = hasDiabetes;
         this.hasHemophilia = hasHemophilia;
         this.hasArrhythmia = hasArrhythmia;
@@ -56,12 +58,12 @@ public class Patient {
         this.name = name;
     }
 
-    public boolean isConscious() {
-        return conscious;
+    public ConsciousnessLevel getConsciousnessLevel() {
+        return consciousnessLevel; 
     }
 
-    public void setConscious(boolean conscious) {
-        this.conscious = conscious;
+    public void setConsciousnessLevel(ConsciousnessLevel consciousnessLevel) { 
+        this.consciousnessLevel = consciousnessLevel; 
     }
 
     public boolean isHasDiabetes() {
