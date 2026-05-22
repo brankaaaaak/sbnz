@@ -1,6 +1,5 @@
 package com.ftn.sbnz.model.assessment;
 
-import com.ftn.sbnz.model.decision.FinalDecision;
 import com.ftn.sbnz.model.enums.BloodPressure;
 import com.ftn.sbnz.model.enums.EmergencyLevel;
 
@@ -12,7 +11,6 @@ public class PatientAssessment {
     private BloodPressure bloodPressure;          // zaključak nivoa 1
     
     private EmergencyLevel preliminaryLevel; // zaključak nivoa 2
-    private FinalDecision finalDecision;       // zaključak nivoa 3
     
     public PatientAssessment() {
     }
@@ -65,11 +63,4 @@ public class PatientAssessment {
         this.preliminaryLevel = preliminaryLevel;
     }
 
-    public FinalDecision getFinalDecision() {
-        return finalDecision;
-    }
-
-    public void setFinalDecision(FinalDecision finalDecision) {
-        this.finalDecision = finalDecision;
-    }
 }
