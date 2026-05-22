@@ -1,4 +1,4 @@
-package com.ftn.sbnz.model.models;
+package com.ftn.sbnz.model.enums;
 
 public enum BloodPressure {
     OPTIMAL,           

@@ -2,6 +2,10 @@ package com.ftn.sbnz.model.models;
 
 import java.time.LocalDateTime;
 
+import com.ftn.sbnz.model.enums.EmergencyLevel;
+import com.ftn.sbnz.model.enums.IncidentType;
+import com.ftn.sbnz.model.enums.Status;
+
 public class Call {
     private Long id;
     private String location;
