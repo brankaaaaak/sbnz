@@ -4,6 +4,7 @@ minPulse
 maxPulse
 
 package com.ftn.sbnz.rules;
+
 import com.ftn.sbnz.model.models.Call;
 import com.ftn.sbnz.model.models.Patient;
 import com.ftn.sbnz.model.facts.ElevatedPulse;
@@ -11,13 +12,19 @@ import com.ftn.sbnz.model.facts.ElevatedPulse;
 template "pulse-check"
 
 rule "Nivo1 - povisen puls za @{ageGroup}"
-    when
-        $call : Call($id : id, $patient : patient)
-        Patient(vitalSigns.pulse > @{maxPulse}) from $patient
-        not ElevatedPulse(callId == $id)
-    then
-        insert(new ElevatedPulse($id));
-        System.out.println("Nivo 1: Povisen puls za poziv " + $id);
+when
+    $call : Call($id : id, $patient : patient)
+
+    Patient(
+        vitalSigns.pulse >= @{minPulse},
+        vitalSigns.pulse < @{maxPulse}
+    ) from $patient
+
+    not ElevatedPulse(callId == $id)
+
+then
+    insert(new ElevatedPulse($id));
+    System.out.println("Nivo1 - povisen puls za @{ageGroup}, poziv " + $id);
 end
 
 end template

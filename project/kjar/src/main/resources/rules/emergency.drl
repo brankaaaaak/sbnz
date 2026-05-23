@@ -1,0 +1,47 @@
+package com.ftn.sbnz.rules;
+
+import com.ftn.sbnz.model.models.Call;
+import com.ftn.sbnz.model.models.Patient;
+import com.ftn.sbnz.model.assessment.PatientAssessment;
+import com.ftn.sbnz.model.decision.FinalDecision;
+import com.ftn.sbnz.model.enums.EmergencyLevel;
+import com.ftn.sbnz.model.enums.IncidentType;
+import com.ftn.sbnz.model.enums.ConsciousnessLevel;
+import com.ftn.sbnz.model.enums.BloodPressure;
+import com.ftn.sbnz.model.enums.Status;
+import com.ftn.sbnz.model.facts.ElevatedPulse;
+import com.ftn.sbnz.model.facts.IrregularBreathing;
+import com.ftn.sbnz.model.facts.ElevatedTemperature;
+import com.ftn.sbnz.model.facts.BloodPressureFact;
+import com.ftn.sbnz.model.facts.ConsciousnessFact;
+
+// NIVO 1 - klasifikacija vitalnih znakova
+rule "Nivo1 - nepravilno disanje"
+    when
+        $call : Call($id : id, $patient : patient)
+        Patient(vitalSigns.breathingRegular == false) from $patient
+        not IrregularBreathing(callId == $id)
+    then
+        insert(new IrregularBreathing($id));
+        System.out.println("Nivo 1: Nepravilno disanje za poziv " + $id);
+end
+
+rule "Nivo1 - povisena temperatura"
+    when
+        $call : Call($id : id, $patient : patient)
+        Patient(vitalSigns.temperature > 37.2) from $patient
+        not ElevatedTemperature(callId == $id)
+    then
+        insert(new ElevatedTemperature($id));
+        System.out.println("Nivo 1: Povisena temperatura za poziv " + $id);
+end
+
+rule "Nivo1 - stanje svijesti"
+    when
+        $call : Call($id : id, $patient : patient)
+        $p : Patient($consciousness : consciousnessLevel) from $patient
+        not ConsciousnessFact(callId == $id)
+    then
+        insert(new ConsciousnessFact($id, $consciousness));
+        System.out.println("Nivo 1: Stanje svijesti " + $consciousness + " za poziv " + $id);
+end

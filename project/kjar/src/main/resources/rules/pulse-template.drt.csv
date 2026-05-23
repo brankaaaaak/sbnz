@@ -1,4 +1,4 @@
-ageGroup, minPulse, maxPulse
-"odrasli", 60, 100
-"djeca_6_15", 70, 100
-"djeca_1_5", 80, 130
+ageGroup,minPulse,maxPulse
+odrasli,100,300
+djeca_6_15,100,300
+djeca_1_5,130,300
