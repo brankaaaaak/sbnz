@@ -1,0 +1,4 @@
+ageGroup, minPulse, maxPulse
+"odrasli", 60, 100
+"djeca_6_15", 70, 100
+"djeca_1_5", 80, 130

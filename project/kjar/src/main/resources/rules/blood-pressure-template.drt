@@ -1,0 +1,31 @@
+template header
+category
+minSystolic
+maxSystolic
+minDiastolic
+maxDiastolic
+
+package com.ftn.sbnz.rules;
+import com.ftn.sbnz.model.models.Call;
+import com.ftn.sbnz.model.models.Patient;
+import com.ftn.sbnz.model.facts.BloodPressureFact;
+import com.ftn.sbnz.model.enums.BloodPressure;
+
+template "blood-pressure-check"
+
+rule "Nivo1 - pritisak @{category}"
+    when
+        $call : Call($id : id, $patient : patient)
+        Patient(
+            vitalSigns.systolicPressure >= @{minSystolic},
+            vitalSigns.systolicPressure < @{maxSystolic},
+            vitalSigns.diastolicPressure >= @{minDiastolic},
+            vitalSigns.diastolicPressure < @{maxDiastolic}
+        ) from $patient
+        not BloodPressureFact(callId == $id)
+    then
+        insert(new BloodPressureFact($id, BloodPressure.@{category}));
+        System.out.println("Nivo 1: Pritisak @{category} za poziv " + $id);
+end
+
+end template
