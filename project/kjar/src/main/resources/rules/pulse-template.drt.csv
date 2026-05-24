@@ -1,4 +1,4 @@
-ageGroup,minPulse,maxPulse
-odrasli,100,300
-djeca_6_15,100,300
-djeca_1_5,130,300
+ageGroup,minAge,maxAge,minPulse,maxPulse
+odrasli,18,65,60,100
+djeca_6_15,6,18,70,100
+djeca_1_5,1,6,80,130

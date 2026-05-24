@@ -13,6 +13,7 @@ import com.ftn.sbnz.model.enums.Status;
 import com.ftn.sbnz.model.models.Call;
 import com.ftn.sbnz.model.models.Patient;
 import com.ftn.sbnz.model.models.VitalSigns;
+import com.ftn.sbnz.model.symptoms.StingSymptoms;
 
 @Service
 public class EmergencyService {
@@ -20,41 +21,56 @@ public class EmergencyService {
     @Autowired
     private KieContainer kieContainer;
 
-    public void testRules() {
+    public Call testStingYellowWithPreviousReactionToRed() {
         KieSession kieSession = kieContainer.newKieSession();
 
-        VitalSigns vitalSigns = new VitalSigns(
-            125,    // pulse - povisen
-            115,    // systolic
-            75,     // diastolic
-            36.8,   // temperatura - normalna
-            false   // disanje nepravilno
+        // 1. Pacijent sa nepravilnim disanjem (breathingRegular = false)
+        //    Ovo će aktivirati Nivo2 pravilo "STING + nepravilno disanje -> YELLOW"
+        VitalSigns vs = new VitalSigns(
+            180,    
+            120,    
+            80,     
+            36.6,   
+            false   // breathingRegular = false (nepravilno disanje)
         );
 
         Patient patient = new Patient(
             1L,
-            "Test Pacijent",
-            35,
-            ConsciousnessLevel.UNCONSCIOUS_RESPONSIVE,
+            "Test Patient",
+            30,
+            ConsciousnessLevel.CONSCIOUS,  // svjestan – potrebno za YELLOW
             false,
             false,
             false,
-            vitalSigns
+            vs
         );
 
+        // 2. Poziv tipa STING
         Call call = new Call(
-            1L,
-            "Ulica test",
+            4L,
+            "Test location",
             LocalDateTime.now(),
             1,
-            IncidentType.FAINTING,
+            IncidentType.STING,
             Status.PENDING,
             null,
             patient
         );
 
+        // 3. StingSymptoms sa prethodnom teškom reakcijom (previousSevereReaction = true)
+        StingSymptoms symptoms = new StingSymptoms(
+            call.getId(),
+            false,   // choking
+            false,   // systemic swelling
+            false,   // skin reaction
+            true     // previousSevereReaction - ključno za override u RED
+        );
+
         kieSession.insert(call);
+        kieSession.insert(symptoms);
         kieSession.fireAllRules();
         kieSession.dispose();
+
+        return call;
     }
 }

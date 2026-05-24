@@ -5,6 +5,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.ftn.sbnz.model.models.Call;
 import com.ftn.sbnz.service.services.EmergencyService;
 
 @RestController
@@ -13,11 +14,10 @@ public class EmergencyController {
 
     @Autowired
     private EmergencyService emergencyService;
-
-    @GetMapping("/test")
-    public String test() {
-        emergencyService.testRules();
-        return "Pravila izvrsena";
-    }
     
+    @GetMapping("/sting-test")
+    public Call red() {
+        return emergencyService.testStingYellowWithPreviousReactionToRed();
+    }
+
 }

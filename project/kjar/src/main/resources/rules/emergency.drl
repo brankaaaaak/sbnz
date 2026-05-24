@@ -3,45 +3,175 @@ package com.ftn.sbnz.rules;
 import com.ftn.sbnz.model.models.Call;
 import com.ftn.sbnz.model.models.Patient;
 import com.ftn.sbnz.model.assessment.PatientAssessment;
-import com.ftn.sbnz.model.decision.FinalDecision;
-import com.ftn.sbnz.model.enums.EmergencyLevel;
-import com.ftn.sbnz.model.enums.IncidentType;
-import com.ftn.sbnz.model.enums.ConsciousnessLevel;
-import com.ftn.sbnz.model.enums.BloodPressure;
-import com.ftn.sbnz.model.enums.Status;
-import com.ftn.sbnz.model.facts.ElevatedPulse;
-import com.ftn.sbnz.model.facts.IrregularBreathing;
-import com.ftn.sbnz.model.facts.ElevatedTemperature;
-import com.ftn.sbnz.model.facts.BloodPressureFact;
-import com.ftn.sbnz.model.facts.ConsciousnessFact;
+import com.ftn.sbnz.model.enums.*;
+import com.ftn.sbnz.model.symptoms.StingSymptoms;
+import com.ftn.sbnz.model.facts.*;
 
-// NIVO 1 - klasifikacija vitalnih znakova
+rule "Nivo1 - kreiranje assessment-a"
+no-loop true
+when
+    $call : Call($id : id)
+    not PatientAssessment(callId == $id)
+then
+    PatientAssessment pa = new PatientAssessment();
+    pa.setCallId($id);
+    insert(pa);
+    System.out.println("Kreiran assessment za poziv " + $id);
+end
+
 rule "Nivo1 - nepravilno disanje"
-    when
-        $call : Call($id : id, $patient : patient)
-        Patient(vitalSigns.breathingRegular == false) from $patient
-        not IrregularBreathing(callId == $id)
-    then
-        insert(new IrregularBreathing($id));
-        System.out.println("Nivo 1: Nepravilno disanje za poziv " + $id);
+no-loop true
+when
+    $call : Call($id : id, $patient : patient)
+
+    Patient(vitalSigns.breathingRegular == false) from $patient
+    $assessment : PatientAssessment(callId == $id)
+then
+    modify($assessment){ setIrregularBreathing(true) };
+    System.out.println("Nivo 1: Nepravilno disanje " + $id);
 end
 
 rule "Nivo1 - povisena temperatura"
-    when
-        $call : Call($id : id, $patient : patient)
-        Patient(vitalSigns.temperature > 37.2) from $patient
-        not ElevatedTemperature(callId == $id)
-    then
-        insert(new ElevatedTemperature($id));
-        System.out.println("Nivo 1: Povisena temperatura za poziv " + $id);
+no-loop true
+when
+    $call : Call($id : id, $patient : patient)
+
+    Patient(vitalSigns.temperature > 37.5) from $patient
+
+    $assessment : PatientAssessment(callId == $id)
+
+then
+    modify($assessment){
+        setElevatedTemperature(true)
+    };
+
+    System.out.println("Nivo 1: Povisena temperatura " + $id);
 end
 
 rule "Nivo1 - stanje svijesti"
-    when
-        $call : Call($id : id, $patient : patient)
-        $p : Patient($consciousness : consciousnessLevel) from $patient
-        not ConsciousnessFact(callId == $id)
-    then
-        insert(new ConsciousnessFact($id, $consciousness));
-        System.out.println("Nivo 1: Stanje svijesti " + $consciousness + " za poziv " + $id);
+no-loop true
+when
+    $call : Call($id : id, $patient : patient)
+
+    $p : Patient($consciousness : consciousnessLevel) from $patient
+
+    $assessment : PatientAssessment(callId == $id)
+then
+    modify($assessment){
+        setConsciousnessLevel($consciousness)
+    };
+
+    System.out.println("Nivo 1: Stanje svijesti " + $consciousness);
+end
+
+rule "Nivo2 - STING + nesvjestan -> RED"
+no-loop true
+when
+    $call : Call($id : id, incidentType == IncidentType.STING, $patient : patient)
+
+    PatientAssessment(
+        callId == $id,
+        consciousnessLevel != ConsciousnessLevel.CONSCIOUS
+    )
+then
+    modify($call){
+        setEmergencyLevel(EmergencyLevel.RED)
+    };
+    System.out.println("Nivo 2: STING + nesvjestan -> RED " + $id);
+end
+
+rule "Nivo2 - STING + nepravilno disanje -> YELLOW"
+no-loop true
+when
+    $call : Call($id : id, incidentType == IncidentType.STING, $patient : patient)
+
+    PatientAssessment(
+        callId == $id,
+        irregularBreathing == true,
+        consciousnessLevel == ConsciousnessLevel.CONSCIOUS
+    )
+then
+    modify($call){
+        setEmergencyLevel(EmergencyLevel.YELLOW)
+    };
+    System.out.println("Nivo 2: STING + disanje -> YELLOW " + $id);
+end
+
+rule "Nivo2 - STING default -> GREEN"
+no-loop true
+when
+    $call : Call($id : id, incidentType == IncidentType.STING)
+    not PatientAssessment(callId == $id, irregularBreathing == true)
+    not PatientAssessment(callId == $id, consciousnessLevel != ConsciousnessLevel.CONSCIOUS)
+then
+    modify($call){
+        setEmergencyLevel(EmergencyLevel.GREEN)
+    };
+    System.out.println("Nivo 2: STING -> GREEN " + $id);
+end
+
+rule "Nivo3 - STING override RED (choking/swelling)"
+salience 30
+when
+    $call : Call($id : id, incidentType == IncidentType.STING, $level : emergencyLevel)
+
+    StingSymptoms(
+        callId == $id,
+        (choking == true || systemicSwelling == true)
+    )
+then
+    modify($call){
+        setEmergencyLevel(EmergencyLevel.RED)
+    };
+    System.out.println("Nivo 3: override RED " + $id);
+end
+
+rule "Nivo3 - GREEN + previous reaction -> YELLOW"
+salience 20
+when
+    $call : Call($id : id, incidentType == IncidentType.STING,
+                  emergencyLevel == EmergencyLevel.GREEN)
+
+    StingSymptoms(
+        callId == $id,
+        previousSevereReaction == true
+    )
+then
+    modify($call){
+        setEmergencyLevel(EmergencyLevel.YELLOW)
+    };
+    System.out.println("Nivo 3: GREEN + history -> YELLOW " + $id);
+end
+
+rule "Nivo3 - YELLOW + previous reaction -> RED"
+salience 25
+when
+    $call : Call($id : id, incidentType == IncidentType.STING,
+                  emergencyLevel == EmergencyLevel.YELLOW)
+
+    StingSymptoms(
+        callId == $id,
+        previousSevereReaction == true
+    )
+then
+    modify($call){
+        setEmergencyLevel(EmergencyLevel.RED)
+    };
+    System.out.println("Nivo 3: YELLOW + history -> RED " + $id);
+end
+
+rule "Nivo3 - only skin reaction -> no change"
+when
+    $call : Call($id : id, incidentType == IncidentType.STING,
+                  emergencyLevel != null)
+
+    StingSymptoms(
+        callId == $id,
+        skinReaction == true,
+        choking == false,
+        systemicSwelling == false,
+        previousSevereReaction == false
+    )
+then
+    System.out.println("Nivo 3: skin only - no change " + $id);
 end

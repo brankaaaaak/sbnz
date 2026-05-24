@@ -1,6 +1,7 @@
 package com.ftn.sbnz.model.assessment;
 
 import com.ftn.sbnz.model.enums.BloodPressure;
+import com.ftn.sbnz.model.enums.ConsciousnessLevel;
 import com.ftn.sbnz.model.enums.EmergencyLevel;
 
 public class PatientAssessment {
@@ -9,6 +10,7 @@ public class PatientAssessment {
     private boolean elevatedTemperature;  // zaključak nivoa 1
     private boolean irregularBreathing;   // zaključak nivoa 1
     private BloodPressure bloodPressure;          // zaključak nivoa 1
+    private ConsciousnessLevel consciousnessLevel;  //zaključak nivoa 1
     
     private EmergencyLevel preliminaryLevel; // zaključak nivoa 2
     
@@ -61,6 +63,14 @@ public class PatientAssessment {
 
     public void setPreliminaryLevel(EmergencyLevel preliminaryLevel) {
         this.preliminaryLevel = preliminaryLevel;
+    }
+
+    public ConsciousnessLevel getConsciousnessLevel() {
+        return consciousnessLevel;
+    }
+
+    public void setConsciousnessLevel(ConsciousnessLevel consciousnessLevel) {
+        this.consciousnessLevel = consciousnessLevel;
     }
 
 }
