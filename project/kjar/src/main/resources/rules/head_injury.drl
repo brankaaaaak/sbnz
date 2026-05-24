@@ -1,0 +1,83 @@
+package com.ftn.sbnz.rules;
+
+import com.ftn.sbnz.model.models.Call;
+import com.ftn.sbnz.model.models.Patient;
+import com.ftn.sbnz.model.assessment.PatientAssessment;
+import com.ftn.sbnz.model.enums.EmergencyLevel;
+import com.ftn.sbnz.model.enums.IncidentType;
+import com.ftn.sbnz.model.enums.ConsciousnessLevel;
+import com.ftn.sbnz.model.symptoms.InjuryHeadSymptoms;
+
+// Pravilo: Povreda glave + nema svijesti + ne reaguje na nadražaje -> CRVENO
+rule "Nivo2 - Head injury unconscious no reaction -> RED"
+no-loop true
+when
+    $call : Call($id : id, incidentType == IncidentType.INJURY_HEAD)
+    $assessment : PatientAssessment(callId == $id, 
+                                    consciousnessLevel == ConsciousnessLevel.UNCONSCIOUS_UNRESPONSIVE)
+then
+    modify($call) { setEmergencyLevel(EmergencyLevel.RED) };
+    System.out.println("Nivo2 - Head injury: unconscious, no reaction -> RED " + $id);
+end
+
+// Pravilo: Povreda glave + nema svijesti + reaguje na nadražaje -> ŽUTO
+rule "Nivo2 - Head injury unconscious with reaction -> YELLOW"
+no-loop true
+when
+    $call : Call($id : id, incidentType == IncidentType.INJURY_HEAD)
+    $assessment : PatientAssessment(callId == $id, 
+                                    consciousnessLevel == ConsciousnessLevel.UNCONSCIOUS_RESPONSIVE)
+then
+    modify($call) { setEmergencyLevel(EmergencyLevel.YELLOW) };
+    System.out.println("Nivo2 - Head injury: unconscious, reacts -> YELLOW " + $id);
+end
+
+// Pravilo: Povreda glave + svijest prisutna -> ZELENO
+rule "Nivo2 - Head injury conscious -> GREEN"
+no-loop true
+when
+    $call : Call($id : id, incidentType == IncidentType.INJURY_HEAD)
+    $assessment : PatientAssessment(callId == $id, 
+                                    consciousnessLevel == ConsciousnessLevel.CONSCIOUS)
+then
+    modify($call) { setEmergencyLevel(EmergencyLevel.GREEN) };
+    System.out.println("Nivo2 - Head injury: conscious -> GREEN " + $id);
+end
+
+//NIVO 3
+
+// Ako je preliminarno CRVENO ili ŽUTO i otvorena rana -> CRVENO (ostaje crveno ili postaje crveno)
+rule "Nivo3 - Head injury RED/YELLOW + open wound -> RED"
+no-loop true
+when
+    $call : Call($id : id, incidentType == IncidentType.INJURY_HEAD,
+                 (emergencyLevel == EmergencyLevel.RED || emergencyLevel == EmergencyLevel.YELLOW))
+    $symptoms : InjuryHeadSymptoms(callId == $id, openWound == true)
+then
+    modify($call) { setEmergencyLevel(EmergencyLevel.RED) };
+    System.out.println("Nivo3 - Head injury: RED/YELLOW + open wound -> RED " + $id);
+end
+
+// Ako je preliminarno ZELENO i otvorena rana -> ŽUTO
+rule "Nivo3 - Head injury GREEN + open wound -> YELLOW"
+no-loop true
+when
+    $call : Call($id : id, incidentType == IncidentType.INJURY_HEAD,
+                 emergencyLevel == EmergencyLevel.GREEN)
+    $symptoms : InjuryHeadSymptoms(callId == $id, openWound == true, vomiting == false)
+then
+    modify($call) { setEmergencyLevel(EmergencyLevel.YELLOW) };
+    System.out.println("Nivo3 - Head injury: GREEN + open wound -> YELLOW " + $id);
+end
+
+// Ako je preliminarno ZELENO i ima oba simptoma (povraćanje i otvorena rana) ili samo povraćanje -> CRVENO
+rule "Nivo3 - Head injury GREEN + both symptoms -> RED"
+no-loop true
+when
+    $call : Call($id : id, incidentType == IncidentType.INJURY_HEAD,
+                 emergencyLevel == EmergencyLevel.GREEN)
+    $symptoms : InjuryHeadSymptoms(callId == $id, vomiting == true)
+then
+    modify($call) { setEmergencyLevel(EmergencyLevel.RED) };
+    System.out.println("Nivo3 - Head injury: GREEN + vomiting & open wound -> RED " + $id);
+end

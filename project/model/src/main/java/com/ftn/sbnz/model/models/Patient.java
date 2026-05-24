@@ -7,9 +7,6 @@ public class Patient {
     private int age;
     private String name;
     private ConsciousnessLevel consciousnessLevel;
-    private boolean hasDiabetes;
-    private boolean hasHemophilia;
-    private boolean hasArrhythmia;
     private VitalSigns vitalSigns;
     
     public Patient() {
@@ -19,18 +16,12 @@ public class Patient {
                    String name,
                    int age,
                    ConsciousnessLevel consciousnessLevel,
-                   boolean hasDiabetes,
-                   boolean hasHemophilia,
-                   boolean hasArrhythmia,
                    VitalSigns vitalSigns) {
 
         this.id = id;
         this.name = name;
         this.age = age;
         this.consciousnessLevel = consciousnessLevel;
-        this.hasDiabetes = hasDiabetes;
-        this.hasHemophilia = hasHemophilia;
-        this.hasArrhythmia = hasArrhythmia;
         this.vitalSigns = vitalSigns;
     }
 
@@ -64,30 +55,6 @@ public class Patient {
 
     public void setConsciousnessLevel(ConsciousnessLevel consciousnessLevel) { 
         this.consciousnessLevel = consciousnessLevel; 
-    }
-
-    public boolean isHasDiabetes() {
-        return hasDiabetes;
-    }
-
-    public void setHasDiabetes(boolean hasDiabetes) {
-        this.hasDiabetes = hasDiabetes;
-    }
-
-    public boolean isHasHemophilia() {
-        return hasHemophilia;
-    }
-
-    public void setHasHemophilia(boolean hasHemophilia) {
-        this.hasHemophilia = hasHemophilia;
-    }
-
-    public boolean isHasArrhythmia() {
-        return hasArrhythmia;
-    }
-
-    public void setHasArrhythmia(boolean hasArrhythmia) {
-        this.hasArrhythmia = hasArrhythmia;
     }
 
     public VitalSigns getVitalSigns() {

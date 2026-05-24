@@ -16,8 +16,24 @@ public class EmergencyController {
     private EmergencyService emergencyService;
     
     @GetMapping("/sting-test")
-    public Call red() {
+    public Call sting() {
         return emergencyService.testStingYellowWithPreviousReactionToRed();
     }
+
+    @GetMapping("/head-test1")
+    public Call head1() {
+        return emergencyService.testHeadInjuryGreenOpenWoundToYellow();
+    }
+
+    @GetMapping("/head-test2")
+    public Call head2() {
+        return emergencyService.testHeadInjuryGreenVomitingToRed();
+    }
+
+    @GetMapping("/head-test3")
+    public Call head3() {
+        return emergencyService.testHeadInjuryRedYellowOpenWoundToRed();
+    }
+
 
 }

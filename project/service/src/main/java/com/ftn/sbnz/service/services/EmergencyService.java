@@ -13,6 +13,7 @@ import com.ftn.sbnz.model.enums.Status;
 import com.ftn.sbnz.model.models.Call;
 import com.ftn.sbnz.model.models.Patient;
 import com.ftn.sbnz.model.models.VitalSigns;
+import com.ftn.sbnz.model.symptoms.InjuryHeadSymptoms;
 import com.ftn.sbnz.model.symptoms.StingSymptoms;
 
 @Service
@@ -39,9 +40,6 @@ public class EmergencyService {
             "Test Patient",
             30,
             ConsciousnessLevel.CONSCIOUS,  // svjestan – potrebno za YELLOW
-            false,
-            false,
-            false,
             vs
         );
 
@@ -71,6 +69,74 @@ public class EmergencyService {
         kieSession.fireAllRules();
         kieSession.dispose();
 
+        return call;
+    }
+    // 1. Test za pravilo: Nivo3 - Head injury RED/YELLOW + open wound -> RED
+    public Call testHeadInjuryRedYellowOpenWoundToRed() {
+        KieSession kieSession = kieContainer.newKieSession();
+
+        // Pacijent: UNCONSCIOUS_RESPONSIVE -> Nivo2 će postaviti YELLOW
+        VitalSigns vs = new VitalSigns(120, 80, 70, 36.6, true);
+        Patient patient = new Patient(1L, "Head patient", 30,
+                ConsciousnessLevel.UNCONSCIOUS_RESPONSIVE, vs);
+        Call call = new Call(10L, "Test location", LocalDateTime.now(), 1,
+                IncidentType.INJURY_HEAD, Status.PENDING, null, patient);
+
+        // Simptomi: otvorena rana = true, povraćanje = false
+        InjuryHeadSymptoms symptoms = new InjuryHeadSymptoms(call.getId(), false, true);
+
+        kieSession.insert(call);
+        kieSession.insert(symptoms);
+        kieSession.fireAllRules();
+        kieSession.dispose();
+
+        System.out.println("Final emergency level: " + call.getEmergencyLevel()); // Treba RED
+        return call;
+    }
+
+    // 2. Test za pravilo: Nivo3 - Head injury GREEN + open wound -> YELLOW
+    public Call testHeadInjuryGreenOpenWoundToYellow() {
+        KieSession kieSession = kieContainer.newKieSession();
+
+        // Pacijent: CONSCIOUS -> Nivo2 će postaviti GREEN
+        VitalSigns vs = new VitalSigns(120, 80, 70, 36.6, true);
+        Patient patient = new Patient(2L, "Head patient", 25,
+                ConsciousnessLevel.CONSCIOUS, vs);
+        Call call = new Call(11L, "Test location", LocalDateTime.now(), 1,
+                IncidentType.INJURY_HEAD, Status.PENDING, null, patient);
+
+        // Simptomi: otvorena rana = true, povraćanje = false
+        InjuryHeadSymptoms symptoms = new InjuryHeadSymptoms(call.getId(), false, true);
+
+        kieSession.insert(call);
+        kieSession.insert(symptoms);
+        kieSession.fireAllRules();
+        kieSession.dispose();
+
+        System.out.println("Final emergency level: " + call.getEmergencyLevel()); // Treba YELLOW
+        return call;
+    }
+
+    // 3. Test za pravilo: Nivo3 - Head injury GREEN + vomiting -> RED
+    public Call testHeadInjuryGreenVomitingToRed() {
+        KieSession kieSession = kieContainer.newKieSession();
+
+        // Pacijent: CONSCIOUS -> Nivo2 će postaviti GREEN
+        VitalSigns vs = new VitalSigns(120, 80, 70, 36.6, true);
+        Patient patient = new Patient(3L, "Head patient", 40,
+                ConsciousnessLevel.CONSCIOUS, vs);
+        Call call = new Call(12L, "Test location", LocalDateTime.now(), 1,
+                IncidentType.INJURY_HEAD, Status.PENDING, null, patient);
+
+        // Simptomi: povraćanje = true (otvorena rana može biti bilo koja)
+        InjuryHeadSymptoms symptoms = new InjuryHeadSymptoms(call.getId(), true, true);
+
+        kieSession.insert(call);
+        kieSession.insert(symptoms);
+        kieSession.fireAllRules();
+        kieSession.dispose();
+
+        System.out.println("Final emergency level: " + call.getEmergencyLevel()); // Treba RED
         return call;
     }
 }
