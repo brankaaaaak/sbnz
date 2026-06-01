@@ -1,5 +1,7 @@
 package com.ftn.sbnz.model.models;
 
+import com.ftn.sbnz.model.enums.ConsciousnessLevel;
+
 public class VitalSigns {
 
     private int pulse;
@@ -7,6 +9,7 @@ public class VitalSigns {
     private int diastolicPressure;
     private double temperature;
     private boolean breathingRegular;
+    private ConsciousnessLevel consciousnessLevel;
 
     public VitalSigns() {
     }
@@ -15,13 +18,15 @@ public class VitalSigns {
                       int systolicPressure,
                       int diastolicPressure,
                       double temperature,
-                      boolean breathingRegular) {
+                      boolean breathingRegular,
+                      ConsciousnessLevel consciousnessLevel) {
 
         this.pulse = pulse;
         this.systolicPressure = systolicPressure;
         this.diastolicPressure = diastolicPressure;
         this.temperature = temperature;
         this.breathingRegular = breathingRegular;
+        this.consciousnessLevel = consciousnessLevel;
     }
 
     public int getPulse() {
@@ -62,6 +67,14 @@ public class VitalSigns {
 
     public void setBreathingRegular(boolean breathingRegular) {
         this.breathingRegular = breathingRegular;
+    }
+
+    public ConsciousnessLevel getConsciousnessLevel() {
+        return consciousnessLevel;
+    }
+
+    public void setConsciousnessLevel(ConsciousnessLevel consciousnessLevel) {
+        this.consciousnessLevel = consciousnessLevel;
     }
 
 }

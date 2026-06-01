@@ -32,14 +32,13 @@ public class EmergencyService {
             120,    
             80,     
             36.6,   
-            false   // breathingRegular = false (nepravilno disanje)
-        );
+            false,   // breathingRegular = false (nepravilno disanje)
+            ConsciousnessLevel.CONSCIOUS);
 
         Patient patient = new Patient(
             1L,
             "Test Patient",
             30,
-            ConsciousnessLevel.CONSCIOUS,  // svjestan – potrebno za YELLOW
             vs
         );
 
@@ -48,10 +47,8 @@ public class EmergencyService {
             4L,
             "Test location",
             LocalDateTime.now(),
-            1,
             IncidentType.STING,
             Status.PENDING,
-            null,
             patient
         );
 
@@ -76,11 +73,10 @@ public class EmergencyService {
         KieSession kieSession = kieContainer.newKieSession();
 
         // Pacijent: UNCONSCIOUS_RESPONSIVE -> Nivo2 će postaviti YELLOW
-        VitalSigns vs = new VitalSigns(120, 80, 70, 36.6, true);
-        Patient patient = new Patient(1L, "Head patient", 30,
-                ConsciousnessLevel.UNCONSCIOUS_RESPONSIVE, vs);
-        Call call = new Call(10L, "Test location", LocalDateTime.now(), 1,
-                IncidentType.INJURY_HEAD, Status.PENDING, null, patient);
+        VitalSigns vs = new VitalSigns(120, 80, 70, 36.6, true, ConsciousnessLevel.UNCONSCIOUS_RESPONSIVE);
+        Patient patient = new Patient(1L, "Head patient", 30, vs);
+        Call call = new Call(10L, "Test location", LocalDateTime.now(),
+                IncidentType.INJURY_HEAD, Status.PENDING, patient);
 
         // Simptomi: otvorena rana = true, povraćanje = false
         InjuryHeadSymptoms symptoms = new InjuryHeadSymptoms(call.getId(), false, true);
@@ -90,7 +86,7 @@ public class EmergencyService {
         kieSession.fireAllRules();
         kieSession.dispose();
 
-        System.out.println("Final emergency level: " + call.getEmergencyLevel()); // Treba RED
+        //System.out.println("Final emergency level: " + call.getEmergencyLevel()); // Treba RED
         return call;
     }
 
@@ -99,11 +95,10 @@ public class EmergencyService {
         KieSession kieSession = kieContainer.newKieSession();
 
         // Pacijent: CONSCIOUS -> Nivo2 će postaviti GREEN
-        VitalSigns vs = new VitalSigns(120, 80, 70, 36.6, true);
-        Patient patient = new Patient(2L, "Head patient", 25,
-                ConsciousnessLevel.CONSCIOUS, vs);
-        Call call = new Call(11L, "Test location", LocalDateTime.now(), 1,
-                IncidentType.INJURY_HEAD, Status.PENDING, null, patient);
+        VitalSigns vs = new VitalSigns(120, 80, 70, 36.6, true, ConsciousnessLevel.CONSCIOUS);
+        Patient patient = new Patient(2L, "Head patient", 25, vs);
+        Call call = new Call(11L, "Test location", LocalDateTime.now(),
+                IncidentType.INJURY_HEAD, Status.PENDING, patient);
 
         // Simptomi: otvorena rana = true, povraćanje = false
         InjuryHeadSymptoms symptoms = new InjuryHeadSymptoms(call.getId(), false, true);
@@ -113,7 +108,7 @@ public class EmergencyService {
         kieSession.fireAllRules();
         kieSession.dispose();
 
-        System.out.println("Final emergency level: " + call.getEmergencyLevel()); // Treba YELLOW
+        //System.out.println("Final emergency level: " + call.getEmergencyLevel()); // Treba YELLOW
         return call;
     }
 
@@ -122,11 +117,10 @@ public class EmergencyService {
         KieSession kieSession = kieContainer.newKieSession();
 
         // Pacijent: CONSCIOUS -> Nivo2 će postaviti GREEN
-        VitalSigns vs = new VitalSigns(120, 80, 70, 36.6, true);
-        Patient patient = new Patient(3L, "Head patient", 40,
-                ConsciousnessLevel.CONSCIOUS, vs);
-        Call call = new Call(12L, "Test location", LocalDateTime.now(), 1,
-                IncidentType.INJURY_HEAD, Status.PENDING, null, patient);
+        VitalSigns vs = new VitalSigns(120, 80, 70, 36.6, true, ConsciousnessLevel.CONSCIOUS);
+        Patient patient = new Patient(3L, "Head patient", 40, vs);
+        Call call = new Call(12L, "Test location", LocalDateTime.now(), 
+                IncidentType.INJURY_HEAD, Status.PENDING, patient);
 
         // Simptomi: povraćanje = true (otvorena rana može biti bilo koja)
         InjuryHeadSymptoms symptoms = new InjuryHeadSymptoms(call.getId(), true, true);
@@ -136,7 +130,7 @@ public class EmergencyService {
         kieSession.fireAllRules();
         kieSession.dispose();
 
-        System.out.println("Final emergency level: " + call.getEmergencyLevel()); // Treba RED
+        //System.out.println("Final emergency level: " + call.getEmergencyLevel()); // Treba RED
         return call;
     }
 }

@@ -13,6 +13,9 @@ public class PatientAssessment {
     private ConsciousnessLevel consciousnessLevel;  //zaključak nivoa 1
     
     private EmergencyLevel preliminaryLevel; // zaključak nivoa 2
+
+    private EmergencyLevel finalLevel; //nivo 3
+    private boolean finalized = false;
     
     public PatientAssessment() {
     }
@@ -57,6 +60,14 @@ public class PatientAssessment {
         this.bloodPressure = bloodPressure;
     }
 
+    public ConsciousnessLevel getConsciousnessLevel() {
+        return consciousnessLevel;
+    }
+
+    public void setConsciousnessLevel(ConsciousnessLevel consciousnessLevel) {
+        this.consciousnessLevel = consciousnessLevel;
+    }
+
     public EmergencyLevel getPreliminaryLevel() {
         return preliminaryLevel;
     }
@@ -65,12 +76,20 @@ public class PatientAssessment {
         this.preliminaryLevel = preliminaryLevel;
     }
 
-    public ConsciousnessLevel getConsciousnessLevel() {
-        return consciousnessLevel;
+    public EmergencyLevel getFinalLevel() {
+        return finalLevel;
     }
 
-    public void setConsciousnessLevel(ConsciousnessLevel consciousnessLevel) {
-        this.consciousnessLevel = consciousnessLevel;
+    public void setFinalLevel(EmergencyLevel finalLevel) {
+        this.finalLevel = finalLevel;
+    }    
+     
+    public boolean isFinalized(){
+        return finalized;
+    }
+
+    public void setFinalized(boolean finalized){
+        this.finalized = finalized;
     }
 
 }
