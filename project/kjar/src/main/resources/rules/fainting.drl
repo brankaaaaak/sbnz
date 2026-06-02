@@ -36,7 +36,7 @@ when
 
     $assessment : PatientAssessment(
         callId == $id,
-        consciousnessLevel == ConsciousnessLevel.UNCONSCIOUS,
+        consciousnessLevel == ConsciousnessLevel.UNCONSCIOUS_UNRESPONSIVE,
         elevatedPulse == false
     )
 then
@@ -81,7 +81,7 @@ when
 
     $assessment : PatientAssessment(
         callId == $id,
-        consciousnessLevel == ConsciousnessLevel.UNCONSCIOUS,
+        consciousnessLevel == ConsciousnessLevel.UNCONSCIOUS_UNRESPONSIVE,
         (elevatedPulse == true || irregularBreathing == true)
     )
 
@@ -125,7 +125,7 @@ when
 
     $assessment : PatientAssessment(
         callId == $id,
-        bloodPressure == BloodPresure.HYPOTENSION
+        bloodPressure == BloodPressure.HYPOTENSION
     )
 then
     modify($assessment){
