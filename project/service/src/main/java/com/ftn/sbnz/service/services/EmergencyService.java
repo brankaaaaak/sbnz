@@ -48,7 +48,7 @@ public class EmergencyService {
             "Test location",
             LocalDateTime.now(),
             IncidentType.STING,
-            Status.PENDING,
+            Status.IN_PROGRESS,
             patient
         );
 
@@ -76,7 +76,7 @@ public class EmergencyService {
         VitalSigns vs = new VitalSigns(120, 80, 70, 36.6, true, ConsciousnessLevel.UNCONSCIOUS_RESPONSIVE);
         Patient patient = new Patient(1L, "Head patient", 30, vs);
         Call call = new Call(10L, "Test location", LocalDateTime.now(),
-                IncidentType.INJURY_HEAD, Status.PENDING, patient);
+                IncidentType.INJURY_HEAD, Status.IN_PROGRESS, patient);
 
         // Simptomi: otvorena rana = true, povraćanje = false
         InjuryHeadSymptoms symptoms = new InjuryHeadSymptoms(call.getId(), false, true);
@@ -98,7 +98,7 @@ public class EmergencyService {
         VitalSigns vs = new VitalSigns(120, 80, 70, 36.6, true, ConsciousnessLevel.CONSCIOUS);
         Patient patient = new Patient(2L, "Head patient", 25, vs);
         Call call = new Call(11L, "Test location", LocalDateTime.now(),
-                IncidentType.INJURY_HEAD, Status.PENDING, patient);
+                IncidentType.INJURY_HEAD, Status.IN_PROGRESS, patient);
 
         // Simptomi: otvorena rana = true, povraćanje = false
         InjuryHeadSymptoms symptoms = new InjuryHeadSymptoms(call.getId(), false, true);
@@ -120,7 +120,7 @@ public class EmergencyService {
         VitalSigns vs = new VitalSigns(120, 80, 70, 36.6, true, ConsciousnessLevel.CONSCIOUS);
         Patient patient = new Patient(3L, "Head patient", 40, vs);
         Call call = new Call(12L, "Test location", LocalDateTime.now(), 
-                IncidentType.INJURY_HEAD, Status.PENDING, patient);
+                IncidentType.INJURY_HEAD, Status.IN_PROGRESS, patient);
 
         // Simptomi: povraćanje = true (otvorena rana može biti bilo koja)
         InjuryHeadSymptoms symptoms = new InjuryHeadSymptoms(call.getId(), true, true);
