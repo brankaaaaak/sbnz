@@ -1,5 +1,6 @@
 package com.ftn.sbnz.model.symptoms;
 
+@SymptomType("STING")
 public class StingSymptoms {
     private Long callId;
 

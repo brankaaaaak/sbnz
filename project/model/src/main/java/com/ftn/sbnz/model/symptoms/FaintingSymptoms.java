@@ -1,5 +1,6 @@
 package com.ftn.sbnz.model.symptoms;
 
+@SymptomType("FAINTING")
 public class FaintingSymptoms {
     private Long callId;
     private boolean diabetes;

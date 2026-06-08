@@ -3,8 +3,10 @@ package com.ftn.sbnz.service.controllers;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -13,6 +15,10 @@ import org.springframework.web.bind.annotation.RestController;
 import com.ftn.sbnz.model.enums.ConsciousnessLevel;
 import com.ftn.sbnz.model.enums.IncidentType;
 import com.ftn.sbnz.model.models.Call;
+import com.ftn.sbnz.service.dto.FinalAssessmentResponse;
+import com.ftn.sbnz.service.dto.PreliminaryAssessmentResponse;
+import com.ftn.sbnz.service.dto.SymptomFieldDTO;
+import com.ftn.sbnz.service.dto.SymptomsRequest;
 import com.ftn.sbnz.service.services.EmergencyService;
 
 @CrossOrigin(origins = "http://localhost:4200")
@@ -22,26 +28,6 @@ public class EmergencyController {
 
     @Autowired
     private EmergencyService emergencyService;
-    
-    @GetMapping("/sting-test")
-    public Call sting() {
-        return emergencyService.testStingYellowWithPreviousReactionToRed();
-    }
-
-    @GetMapping("/head-test1")
-    public Call head1() {
-        return emergencyService.testHeadInjuryGreenOpenWoundToYellow();
-    }
-
-    @GetMapping("/head-test2")
-    public Call head2() {
-        return emergencyService.testHeadInjuryGreenVomitingToRed();
-    }
-
-    @GetMapping("/head-test3")
-    public Call head3() {
-        return emergencyService.testHeadInjuryRedYellowOpenWoundToRed();
-    }
 
     @GetMapping("/enums/incident-types")
     public List<IncidentType> getIncidentTypes() {
@@ -52,9 +38,20 @@ public class EmergencyController {
     public List<ConsciousnessLevel> getLevels() {
         return List.of(ConsciousnessLevel.values());
     }
-    @PostMapping("/calls")
-    public Call createCall(@RequestBody Call call) {
-        //return callService.save(call);
-        return null;
+    @PostMapping("/assessment/preliminary")
+    public PreliminaryAssessmentResponse preliminary(
+            @RequestBody Call call) {
+
+        return emergencyService.calculatePreliminary(call);
+    }
+    
+    @GetMapping("/symptoms/schema/{incidentType}")
+    public List<SymptomFieldDTO> getSchema(@PathVariable IncidentType incidentType) {
+        return emergencyService.getSchema(incidentType);
+    }
+
+    @PostMapping("/assessment/symptoms")
+    public ResponseEntity<FinalAssessmentResponse> processSymptoms(@RequestBody SymptomsRequest request) {
+        return ResponseEntity.ok(emergencyService.calculateFinal(request));
     }
 }

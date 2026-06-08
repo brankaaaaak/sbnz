@@ -14,6 +14,7 @@ public class PatientAssessment {
     
     private EmergencyLevel preliminaryLevel; // zaključak nivoa 2
 
+    private boolean symptomsEntered = false;
     private EmergencyLevel finalLevel; //nivo 3
     private boolean finalized = false;
     
@@ -74,6 +75,14 @@ public class PatientAssessment {
 
     public void setPreliminaryLevel(EmergencyLevel preliminaryLevel) {
         this.preliminaryLevel = preliminaryLevel;
+    }
+
+    public boolean isSymptomsEntered() {
+        return symptomsEntered;
+    }
+
+    public void setSymptomsEntered(boolean symptomsEntered) {
+        this.symptomsEntered = symptomsEntered;
     }
 
     public EmergencyLevel getFinalLevel() {

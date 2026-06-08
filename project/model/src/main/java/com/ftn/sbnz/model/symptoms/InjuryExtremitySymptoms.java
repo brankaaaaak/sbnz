@@ -1,5 +1,6 @@
 package com.ftn.sbnz.model.symptoms;
 
+@SymptomType("INJURY_EXTREMITY")
 public class InjuryExtremitySymptoms {
 
     private Long callId;

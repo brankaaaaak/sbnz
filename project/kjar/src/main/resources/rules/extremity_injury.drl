@@ -51,7 +51,7 @@ rule "Nivo3 - Extremity injury bleeding -> RED"
 no-loop true
 when
     $call : Call($id : id, incidentType == IncidentType.INJURY_EXTREMITY)
-    $a : PatientAssessment(callId == $id, preliminaryLevel != null, finalized == false)
+    $a : PatientAssessment(callId == $id, preliminaryLevel != null, finalized == false, symptomsEntered == true)
     $symptoms : InjuryExtremitySymptoms(
         callId == $id,
         bleeding == true
@@ -69,7 +69,7 @@ rule "Nivo3 - Extremity injury GREEN + open fracture -> YELLOW"
 no-loop true
 when
     $call : Call($id : id, incidentType == IncidentType.INJURY_EXTREMITY)
-    $a : PatientAssessment(callId == $id, preliminaryLevel == EmergencyLevel.GREEN, finalized == false)
+    $a : PatientAssessment(callId == $id, preliminaryLevel == EmergencyLevel.GREEN, finalized == false, symptomsEntered == true)
     $symptoms : InjuryExtremitySymptoms(
         callId == $id,
         openFracture == true,
@@ -88,7 +88,7 @@ rule "Nivo3 - Extremity injury YELLOW + open fracture -> RED"
 no-loop true
 when
     $call : Call($id : id, incidentType == IncidentType.INJURY_EXTREMITY)
-    $a : PatientAssessment(callId == $id, preliminaryLevel == EmergencyLevel.YELLOW, finalized == false)
+    $a : PatientAssessment(callId == $id, preliminaryLevel == EmergencyLevel.YELLOW, finalized == false, symptomsEntered == true)
     $symptoms : InjuryExtremitySymptoms(
         callId == $id,
         openFracture == true,

@@ -121,3 +121,89 @@ button:hover {
   font-weight: 600;
   color: #333;
 }
+
+.symptom-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin-top: 15px;
+}
+
+.symptom-box {
+  background: #2b2b2b;
+  padding: 12px;
+  border-radius: 10px;
+  color: white;
+}
+
+
+.step h1 {
+  text-align: center;
+  font-size: 28px;
+  margin: 20px 0;
+  color: #b30000;
+}
+
+.step ul {
+  list-style: none;
+  padding: 0;
+  margin: 20px 0;
+}
+
+.step ul li {
+  background: #f8f8f8;
+  border-left: 4px solid #b30000;
+  padding: 12px 14px;
+  margin-bottom: 10px;
+  border-radius: 6px;
+  color: #333;
+  font-size: 14px;
+}
+
+.step h2 {
+  text-align: center;
+  margin-bottom: 10px;
+}
+
+.symptom-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin-top: 15px;
+}
+
+.symptom-box {
+  background: #f8f8f8;           
+  border: 1px solid #ddd;
+  border-radius: 10px;
+  padding: 12px;
+  transition: 0.2s;
+}
+
+.symptom-box:hover {
+  border-color: #b30000;
+  box-shadow: 0 0 0 3px rgba(179, 0, 0, 0.08);
+}
+
+.symptom-box label {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+  font-size: 14px;
+  color: #333;
+}
+
+.symptom-box input[type="checkbox"] {
+  width: 18px;
+  height: 18px;
+  accent-color: #b30000;
+  margin: 0;
+}
+
+.step p {
+  margin-top: 10px;
+  color: #555;
+  font-size: 14px;
+  text-align: center;
+}

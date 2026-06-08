@@ -15,6 +15,7 @@ when
 then
     PatientAssessment pa = new PatientAssessment();
     pa.setCallId($id);
+    pa.setSymptomsEntered(false);
     insert(pa);
     System.out.println("Kreiran assessment za poziv " + $id);
 end
@@ -133,7 +134,7 @@ end
 rule "Nivo3 - STING override RED (choking ili systemicSwelling)"
 when
     $call : Call($id : id, incidentType == IncidentType.STING)
-    $assessment : PatientAssessment(callId == $id, preliminaryLevel != null, finalized == false)
+    $assessment : PatientAssessment(callId == $id, preliminaryLevel != null, finalized == false, symptomsEntered == true)
     StingSymptoms(callId == $id, (choking == true || systemicSwelling == true))
 then
     modify($assessment){
@@ -146,7 +147,7 @@ end
 rule "Nivo3 - GREEN + prethodna teska reakcija -> YELLOW"
 when
     $call : Call($id : id, incidentType == IncidentType.STING)
-    $assessment : PatientAssessment(callId == $id, preliminaryLevel == EmergencyLevel.GREEN, finalized == false)
+    $assessment : PatientAssessment(callId == $id, preliminaryLevel == EmergencyLevel.GREEN, finalized == false, symptomsEntered == true)
     StingSymptoms(callId == $id, previousSevereReaction == true, choking == false, systemicSwelling == false)
 then
     modify($assessment){
@@ -159,7 +160,7 @@ end
 rule "Nivo3 - YELLOW + prethodna teska reakcija -> RED"
 when
     $call : Call($id : id, incidentType == IncidentType.STING)
-    $assessment : PatientAssessment(callId == $id, preliminaryLevel == EmergencyLevel.YELLOW, finalized == false)
+    $assessment : PatientAssessment(callId == $id, preliminaryLevel == EmergencyLevel.YELLOW, finalized == false, symptomsEntered == true)
     StingSymptoms(callId == $id, previousSevereReaction == true, choking == false, systemicSwelling == false)
 then
     modify($assessment){
@@ -172,7 +173,7 @@ end
 rule "Nivo3 - samo skin reaction"
 when
     $call : Call($id : id, incidentType == IncidentType.STING)
-    $assessment : PatientAssessment(callId == $id, preliminaryLevel != null, finalized == false)
+    $assessment : PatientAssessment(callId == $id, preliminaryLevel != null, finalized == false, symptomsEntered == true)
     StingSymptoms(
         callId == $id,
         skinReaction == true,
@@ -191,7 +192,7 @@ end
 rule "Nivo3 - default (nema posebnih simptoma)"
 when
     $call : Call($id : id, incidentType == IncidentType.STING)
-    $assessment : PatientAssessment(callId == $id, preliminaryLevel != null, finalized == false)
+    $assessment : PatientAssessment(callId == $id, preliminaryLevel != null, finalized == false, symptomsEntered == true)
     not StingSymptoms(callId == $id, (choking == true || systemicSwelling == true))
     not StingSymptoms(callId == $id, previousSevereReaction == true)
     not StingSymptoms(callId == $id, skinReaction == true)

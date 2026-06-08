@@ -1,5 +1,6 @@
 package com.ftn.sbnz.model.symptoms;
 
+@SymptomType("INJURY_HEAD")
 public class InjuryHeadSymptoms {
     private Long callId;
     private boolean vomiting;           // povraća

@@ -142,7 +142,8 @@ when
     $assessment : PatientAssessment(
         callId == $id,
         preliminaryLevel == EmergencyLevel.GREEN,
-        finalized == false
+        finalized == false,
+        symptomsEntered == true
     )
 
     FaintingSymptoms(
@@ -166,7 +167,8 @@ when
     $assessment : PatientAssessment(
         callId == $id,
         preliminaryLevel == EmergencyLevel.YELLOW,
-        finalized == false
+        finalized == false,
+        symptomsEntered == true
     )
 
     FaintingSymptoms(
@@ -190,7 +192,8 @@ when
     $assessment : PatientAssessment(
         callId == $id,
         preliminaryLevel == EmergencyLevel.RED,
-        finalized == false
+        finalized == false,
+        symptomsEntered == true
     )
 
     FaintingSymptoms(
@@ -215,7 +218,8 @@ when
     $assessment : PatientAssessment(
         callId == $id,
         preliminaryLevel != null,
-        finalized == false
+        finalized == false,
+        symptomsEntered == true
     )
 
     FaintingSymptoms(
@@ -239,7 +243,8 @@ when
     $assessment : PatientAssessment(
         callId == $id,
         preliminaryLevel == EmergencyLevel.GREEN,
-        finalized == false
+        finalized == false,
+        symptomsEntered == true
     )
 
     FaintingSymptoms(
@@ -262,6 +267,7 @@ when
     $assessment : PatientAssessment(
         callId == $id,
         finalized == false,
+        symptomsEntered == true,
         (preliminaryLevel == EmergencyLevel.YELLOW
             || preliminaryLevel == EmergencyLevel.RED
         )

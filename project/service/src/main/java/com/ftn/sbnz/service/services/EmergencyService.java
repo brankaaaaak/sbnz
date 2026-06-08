@@ -1,136 +1,210 @@
 package com.ftn.sbnz.service.services;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
-import org.kie.api.runtime.KieContainer;
 import org.kie.api.runtime.KieSession;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import com.ftn.sbnz.model.enums.ConsciousnessLevel;
+import com.ftn.sbnz.model.assessment.PatientAssessment;
 import com.ftn.sbnz.model.enums.IncidentType;
 import com.ftn.sbnz.model.enums.Status;
 import com.ftn.sbnz.model.models.Call;
-import com.ftn.sbnz.model.models.Patient;
-import com.ftn.sbnz.model.models.VitalSigns;
-import com.ftn.sbnz.model.symptoms.InjuryHeadSymptoms;
-import com.ftn.sbnz.model.symptoms.StingSymptoms;
+import com.ftn.sbnz.service.drools.DroolsMemory;
+import com.ftn.sbnz.service.dto.FinalAssessmentResponse;
+import com.ftn.sbnz.service.dto.PreliminaryAssessmentResponse;
+import com.ftn.sbnz.service.dto.SymptomFieldDTO;
+import com.ftn.sbnz.service.dto.SymptomsRequest;
+import com.ftn.sbnz.service.mapping.SymptomFactory;
 
 @Service
 public class EmergencyService {
 
-    @Autowired
-    private KieContainer kieContainer;
+    private final DroolsMemory droolsMemory;
+    private final SymptomFactory symptomFactory;
 
-    public Call testStingYellowWithPreviousReactionToRed() {
-        KieSession kieSession = kieContainer.newKieSession();
+    public EmergencyService(
+            DroolsMemory droolsMemory,
+            SymptomFactory symptomFactory) {
 
-        // 1. Pacijent sa nepravilnim disanjem (breathingRegular = false)
-        //    Ovo će aktivirati Nivo2 pravilo "STING + nepravilno disanje -> YELLOW"
-        VitalSigns vs = new VitalSigns(
-            180,    
-            120,    
-            80,     
-            36.6,   
-            false,   // breathingRegular = false (nepravilno disanje)
-            ConsciousnessLevel.CONSCIOUS);
-
-        Patient patient = new Patient(
-            1L,
-            "Test Patient",
-            30,
-            vs
-        );
-
-        // 2. Poziv tipa STING
-        Call call = new Call(
-            4L,
-            "Test location",
-            LocalDateTime.now(),
-            IncidentType.STING,
-            Status.IN_PROGRESS,
-            patient
-        );
-
-        // 3. StingSymptoms sa prethodnom teškom reakcijom (previousSevereReaction = true)
-        StingSymptoms symptoms = new StingSymptoms(
-            call.getId(),
-            false,   // choking
-            false,   // systemic swelling
-            false,   // skin reaction
-            true     // previousSevereReaction - ključno za override u RED
-        );
-
-        kieSession.insert(call);
-        kieSession.insert(symptoms);
-        kieSession.fireAllRules();
-        kieSession.dispose();
-
-        return call;
-    }
-    // 1. Test za pravilo: Nivo3 - Head injury RED/YELLOW + open wound -> RED
-    public Call testHeadInjuryRedYellowOpenWoundToRed() {
-        KieSession kieSession = kieContainer.newKieSession();
-
-        // Pacijent: UNCONSCIOUS_RESPONSIVE -> Nivo2 će postaviti YELLOW
-        VitalSigns vs = new VitalSigns(120, 80, 70, 36.6, true, ConsciousnessLevel.UNCONSCIOUS_RESPONSIVE);
-        Patient patient = new Patient(1L, "Head patient", 30, vs);
-        Call call = new Call(10L, "Test location", LocalDateTime.now(),
-                IncidentType.INJURY_HEAD, Status.IN_PROGRESS, patient);
-
-        // Simptomi: otvorena rana = true, povraćanje = false
-        InjuryHeadSymptoms symptoms = new InjuryHeadSymptoms(call.getId(), false, true);
-
-        kieSession.insert(call);
-        kieSession.insert(symptoms);
-        kieSession.fireAllRules();
-        kieSession.dispose();
-
-        //System.out.println("Final emergency level: " + call.getEmergencyLevel()); // Treba RED
-        return call;
+        this.droolsMemory = droolsMemory;
+        this.symptomFactory = symptomFactory;
     }
 
-    // 2. Test za pravilo: Nivo3 - Head injury GREEN + open wound -> YELLOW
-    public Call testHeadInjuryGreenOpenWoundToYellow() {
-        KieSession kieSession = kieContainer.newKieSession();
+    public PreliminaryAssessmentResponse calculatePreliminary(Call call) {
 
-        // Pacijent: CONSCIOUS -> Nivo2 će postaviti GREEN
-        VitalSigns vs = new VitalSigns(120, 80, 70, 36.6, true, ConsciousnessLevel.CONSCIOUS);
-        Patient patient = new Patient(2L, "Head patient", 25, vs);
-        Call call = new Call(11L, "Test location", LocalDateTime.now(),
-                IncidentType.INJURY_HEAD, Status.IN_PROGRESS, patient);
+        KieSession session = droolsMemory.getSession();
 
-        // Simptomi: otvorena rana = true, povraćanje = false
-        InjuryHeadSymptoms symptoms = new InjuryHeadSymptoms(call.getId(), false, true);
+        synchronized (session) {
 
-        kieSession.insert(call);
-        kieSession.insert(symptoms);
-        kieSession.fireAllRules();
-        kieSession.dispose();
+            call.setId(System.currentTimeMillis());
+            call.setCallTime(LocalDateTime.now());
+            call.setStatus(Status.IN_PROGRESS);
 
-        //System.out.println("Final emergency level: " + call.getEmergencyLevel()); // Treba YELLOW
-        return call;
+            session.insert(call);
+
+            session.fireAllRules();
+
+            PatientAssessment assessment =
+                    session.getObjects()
+                            .stream()
+                            .filter(PatientAssessment.class::isInstance)
+                            .map(PatientAssessment.class::cast)
+                            .filter(a -> call.getId().equals(a.getCallId()))
+                            .findFirst()
+                            .orElseThrow();
+
+            List<String> reasons = new ArrayList<>();
+
+            if (assessment.isElevatedPulse())
+                reasons.add("Elevated pulse");
+
+            if (assessment.isElevatedTemperature())
+                reasons.add("Elevated temperature");
+
+            if (assessment.isIrregularBreathing())
+                reasons.add("Irregular breathing");
+
+            if (assessment.getBloodPressure() != null)
+                reasons.add("Blood pressure: " + assessment.getBloodPressure());
+
+            if (assessment.getConsciousnessLevel() != null)
+                reasons.add("Consciousness: " + assessment.getConsciousnessLevel());
+
+            PreliminaryAssessmentResponse response =
+                    new PreliminaryAssessmentResponse();
+
+            response.setCallId(call.getId());
+            response.setIncidentType(call.getIncidentType());
+            response.setPreliminaryLevel(
+                    assessment.getPreliminaryLevel());
+            response.setReasons(reasons);
+
+            return response;
+        }
     }
 
-    // 3. Test za pravilo: Nivo3 - Head injury GREEN + vomiting -> RED
-    public Call testHeadInjuryGreenVomitingToRed() {
-        KieSession kieSession = kieContainer.newKieSession();
+    public FinalAssessmentResponse calculateFinal(
+            SymptomsRequest request) {
 
-        // Pacijent: CONSCIOUS -> Nivo2 će postaviti GREEN
-        VitalSigns vs = new VitalSigns(120, 80, 70, 36.6, true, ConsciousnessLevel.CONSCIOUS);
-        Patient patient = new Patient(3L, "Head patient", 40, vs);
-        Call call = new Call(12L, "Test location", LocalDateTime.now(), 
-                IncidentType.INJURY_HEAD, Status.IN_PROGRESS, patient);
+        KieSession session = droolsMemory.getSession();
 
-        // Simptomi: povraćanje = true (otvorena rana može biti bilo koja)
-        InjuryHeadSymptoms symptoms = new InjuryHeadSymptoms(call.getId(), true, true);
+        synchronized (session) {
 
-        kieSession.insert(call);
-        kieSession.insert(symptoms);
-        kieSession.fireAllRules();
-        kieSession.dispose();
+            Long callId = request.getCallId();
 
-        //System.out.println("Final emergency level: " + call.getEmergencyLevel()); // Treba RED
-        return call;
+            Call call =
+                    session.getObjects()
+                            .stream()
+                            .filter(Call.class::isInstance)
+                            .map(Call.class::cast)
+                            .filter(c -> callId.equals(c.getId()))
+                            .findFirst()
+                            .orElseThrow(() ->
+                                    new RuntimeException(
+                                            "Call not found: " + callId));
+
+            PatientAssessment assessment =
+                    session.getObjects()
+                            .stream()
+                            .filter(PatientAssessment.class::isInstance)
+                            .map(PatientAssessment.class::cast)
+                            .filter(a -> callId.equals(a.getCallId()))
+                            .findFirst()
+                            .orElseThrow(() ->
+                                    new RuntimeException(
+                                            "Assessment not found"));
+
+            assessment.setSymptomsEntered(true);
+
+            session.update(
+                    session.getFactHandle(assessment),
+                    assessment
+            );
+
+            Object symptoms =
+                    symptomFactory.create(
+                            call.getIncidentType().name(),
+                            callId,
+                            request.getSymptoms()
+                    );
+
+            session.insert(symptoms);
+
+            session.fireAllRules();
+
+            FinalAssessmentResponse response =
+                    new FinalAssessmentResponse();
+
+            response.setCallId(callId);
+            response.setFinalLevel(
+                    assessment.getFinalLevel());
+
+            return response;
+        }
+    }
+
+    public List<SymptomFieldDTO> getSchema(
+            IncidentType type) {
+
+        return switch (type) {
+
+            case INJURY_HEAD -> List.of(
+                    new SymptomFieldDTO(
+                            "vomiting",
+                            "Vomiting",
+                            "boolean"),
+                    new SymptomFieldDTO(
+                            "openWound",
+                            "Open wound",
+                            "boolean")
+            );
+
+            case INJURY_EXTREMITY -> List.of(
+                    new SymptomFieldDTO(
+                            "openFracture",
+                            "Open fracture",
+                            "boolean"),
+                    new SymptomFieldDTO(
+                            "bleeding",
+                            "Bleeding",
+                            "boolean")
+            );
+
+            case STING -> List.of(
+                    new SymptomFieldDTO(
+                            "choking",
+                            "Choking",
+                            "boolean"),
+                    new SymptomFieldDTO(
+                            "systemicSwelling",
+                            "Systemic swelling",
+                            "boolean"),
+                    new SymptomFieldDTO(
+                            "skinReaction",
+                            "Skin reaction",
+                            "boolean"),
+                    new SymptomFieldDTO(
+                            "previousSevereReaction",
+                            "Previous severe reaction",
+                            "boolean")
+            );
+
+            case FAINTING -> List.of(
+                    new SymptomFieldDTO(
+                            "diabetes",
+                            "Diabetes",
+                            "boolean"),
+                    new SymptomFieldDTO(
+                            "tookTherapy",
+                            "Took therapy",
+                            "boolean"),
+                    new SymptomFieldDTO(
+                            "painEarlier",
+                            "Pain earlier",
+                            "boolean")
+            );
+        };
     }
 }

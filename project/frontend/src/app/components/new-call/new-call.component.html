@@ -124,6 +124,67 @@
 
     </div>
 
+    <!-- STEP 4 -->
+    <div *ngIf="step === 4">
+
+      <h2>Preliminary Assessment</h2>
+
+      <h1>{{ preliminaryResult?.preliminaryLevel }}</h1>
+
+      <ul>
+        <li *ngFor="let reason of preliminaryResult?.reasons">
+          {{ reason }}
+        </li>
+      </ul>
+
+      <button (click)="loadSymptoms()">
+        Continue to symptoms
+      </button>
+
+    </div>
+
+    <!-- STEP 5 -->
+    <div *ngIf="step === 5" class="step">
+
+      <h3>Symptoms</h3>
+
+      <p>Fill symptoms for {{ call.incidentType }}</p>
+
+      <div class="symptom-grid">
+
+        <div class="symptom-box" *ngFor="let f of symptomSchema">
+
+          <label>
+            <input type="checkbox"
+                  [(ngModel)]="symptomValues[f.key]">
+
+            {{ f.label }}
+          </label>
+
+        </div>
+
+      </div>
+
+      <div class="buttons">
+        <button (click)="step = 4">Back</button>
+        <button (click)="submitSymptoms()">Continue</button>
+      </div>
+
+    </div>
+
+    <!-- STEP 6 -->
+    <div *ngIf="step === 6" class="step">
+
+      <h2>Final Assessment</h2>
+
+      <h1>{{ finalResult?.finalLevel }}</h1>
+
+      <button (click)="step = 1">
+        New Call
+      </button>
+
+    </div>
+
   </div>
 
 </div>

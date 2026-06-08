@@ -55,7 +55,7 @@ rule "Nivo3 - Head injury RED/YELLOW + open wound -> RED"
 no-loop true
 when
     $call : Call($id : id, incidentType == IncidentType.INJURY_HEAD)
-    $a : PatientAssessment(callId == $id, (preliminaryLevel == EmergencyLevel.RED || preliminaryLevel == EmergencyLevel.YELLOW), finalized == false)
+    $a : PatientAssessment(callId == $id, (preliminaryLevel == EmergencyLevel.RED || preliminaryLevel == EmergencyLevel.YELLOW), finalized == false, symptomsEntered == true)
     $symptoms : InjuryHeadSymptoms(callId == $id, openWound == true)
 then
     modify($a){
@@ -70,7 +70,7 @@ rule "Nivo3 - Head injury GREEN + open wound -> YELLOW"
 no-loop true
 when
     $call : Call($id : id, incidentType == IncidentType.INJURY_HEAD)
-    $a : PatientAssessment(callId == $id, preliminaryLevel == EmergencyLevel.GREEN, finalized == false)
+    $a : PatientAssessment(callId == $id, preliminaryLevel == EmergencyLevel.GREEN, finalized == false, symptomsEntered == true)
     $symptoms : InjuryHeadSymptoms(callId == $id, openWound == true, vomiting == false)
 then
     modify($a){
@@ -84,7 +84,7 @@ rule "Nivo3 - Head injury GREEN + vomiting -> RED"
 no-loop true
 when
     $call : Call($id : id, incidentType == IncidentType.INJURY_HEAD)
-    $a : PatientAssessment(callId == $id, preliminaryLevel == EmergencyLevel.GREEN, finalized == false)
+    $a : PatientAssessment(callId == $id, preliminaryLevel == EmergencyLevel.GREEN, finalized == false, symptomsEntered == true)
     $symptoms : InjuryHeadSymptoms(callId == $id, vomiting == true)
 then
     modify($a){
@@ -94,10 +94,24 @@ then
     System.out.println("Nivo3 - Head injury: GREEN + vomiting & open wound -> RED " + $id);
 end
 
+rule "Nivo3 - Head injury YELLOW + vomiting -> RED"
+no-loop true
+when
+    $call : Call($id : id, incidentType == IncidentType.INJURY_HEAD)
+    $a : PatientAssessment(callId == $id, preliminaryLevel == EmergencyLevel.YELLOW, finalized == false, symptomsEntered == true)
+    $symptoms : InjuryHeadSymptoms(callId == $id, vomiting == true)
+then
+    modify($a){
+        setFinalLevel(EmergencyLevel.RED),
+        setFinalized(true)
+    };
+    System.out.println("Nivo3 - Head injury: YELLOW + vomiting & open wound -> RED " + $id);
+end
+
 rule "Nivo3 - Head injury default"
 when
     $call : Call($id : id, incidentType == IncidentType.INJURY_HEAD)
-    $a : PatientAssessment(callId == $id, preliminaryLevel != null, finalized == false)
+    $a : PatientAssessment(callId == $id, preliminaryLevel != null, finalized == false, symptomsEntered == true)
     not InjuryHeadSymptoms(callId == $id, openWound == true)
     not InjuryHeadSymptoms(callId == $id, vomiting == true)
 then
