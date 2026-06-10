@@ -256,17 +256,3 @@ then
     System.out.println("Advice: imobilizacija za poziv " + $callId);
 end
 
-// ISPIS FINALNIH SAVJETA 
-
-rule "Advice - ispis svih savjeta"
-salience -100
-no-loop true
-when
-    $advice : CallerAdvice($callId : callId)
-    $assessment : PatientAssessment(callId == $callId, finalized == true, $level : finalLevel)
-then
-    System.out.println("     SAVJETI ZA POZIVAOCA (poziv " + $callId + ", nivo: " + $level + ")");
-    for (String s : $advice.getAdviceList()) {
-        System.out.println("  - " + s);
-    }
-end

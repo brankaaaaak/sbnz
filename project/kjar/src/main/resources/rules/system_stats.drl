@@ -46,7 +46,7 @@ end
 
 // ACCUMULATE 3: Brojanje slučajeva prvog stepena prioriteta (RED)
 //
-// Broji sve nefinalizirane PatientAssessment-e čiji je finalLevel == RED.
+// Broji sve nefinalizirane pozive čiji je finalLevel == RED.
 // RED označava najviši (prvi) stepen prioriteta u sistemu trijaze.
 
 rule "SystemStats - brojanje RED prioriteta"
@@ -69,20 +69,4 @@ then
         setRedLevelCount($redCount)
     };
     System.out.println("SystemStats: RED prioritet (1. stepen) = " + $redCount);
-end
-
-// ISPIS STANJA SISTEMA 
-// Okida se nakon što su sve tri accumulate vrijednosti ažurirane.
-
-rule "SystemStats - ispis stanja sistema"
-salience -200
-no-loop true
-when
-    $stats : SystemStats()
-then
-    System.out.println("======================================");
-    System.out.println("  STANJE SISTEMA HITNE POMOCI");
-    System.out.println("  Aktivnih poziva:      " + $stats.getActiveCallCount());
-    System.out.println("  Slucajevi RED (1. st): " + $stats.getRedLevelCount());
-    System.out.println("======================================");
 end

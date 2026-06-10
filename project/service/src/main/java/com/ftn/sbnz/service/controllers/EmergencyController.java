@@ -5,6 +5,7 @@ import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -15,10 +16,12 @@ import org.springframework.web.bind.annotation.RestController;
 import com.ftn.sbnz.model.enums.ConsciousnessLevel;
 import com.ftn.sbnz.model.enums.IncidentType;
 import com.ftn.sbnz.model.models.Call;
+import com.ftn.sbnz.service.dto.CallDTO;
 import com.ftn.sbnz.service.dto.FinalAssessmentResponse;
 import com.ftn.sbnz.service.dto.PreliminaryAssessmentResponse;
 import com.ftn.sbnz.service.dto.SymptomFieldDTO;
 import com.ftn.sbnz.service.dto.SymptomsRequest;
+import com.ftn.sbnz.service.dto.SystemStatsDTO;
 import com.ftn.sbnz.service.services.EmergencyService;
 
 @CrossOrigin(origins = "http://localhost:4200")
@@ -53,5 +56,26 @@ public class EmergencyController {
     @PostMapping("/assessment/symptoms")
     public ResponseEntity<FinalAssessmentResponse> processSymptoms(@RequestBody SymptomsRequest request) {
         return ResponseEntity.ok(emergencyService.calculateFinal(request));
+    }
+
+    @GetMapping("/calls")
+    public List<CallDTO> getAllCalls() {
+        return emergencyService.getAllCalls();
+    }
+
+    @GetMapping("/stats")
+    public ResponseEntity<SystemStatsDTO> getStats() {
+        return ResponseEntity.ok(
+                emergencyService.getSystemStats()
+        );
+    }
+
+    @DeleteMapping("/calls/{callId}/finish")
+    public ResponseEntity<Void> finishCall(
+            @PathVariable Long callId) {
+
+        emergencyService.finishCall(callId);
+
+        return ResponseEntity.noContent().build();
     }
 }

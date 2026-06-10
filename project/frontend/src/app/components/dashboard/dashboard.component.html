@@ -1,0 +1,102 @@
+<div class="dashboard-container">
+
+  <div class="top-bar">
+
+    <div>
+      <h1>Emergency Medical Triage Support System</h1>
+      <p>Active emergency calls overview</p>
+    </div>
+
+    <button class="new-btn" routerLink="/new-patient">
+      + New Call
+    </button>
+
+  </div>
+
+  <div class="content">
+
+    <!-- LEFT -->
+
+    <div class="calls-panel">
+
+      <h2>Active Calls</h2>
+
+      <table>
+
+        <thead>
+          <tr>
+            <th>Patient</th>
+            <th>Location</th>
+            <th>Incident</th>
+            <th>Priority</th>
+            <th></th>
+          </tr>
+        </thead>
+
+        <tbody>
+
+          <tr *ngFor="let call of calls">
+
+            <td>{{ call.name }}</td>
+
+            <td>{{ call.location }}</td>
+
+            <td>{{ call.incidentType }}</td>
+
+            <td>
+              <span class="level">
+                {{ call.finalLevel || 'PENDING' }}
+              </span>
+            </td>
+
+            <td>
+              <button
+                class="finish-btn"
+                (click)="finishCall(call.id)">
+                Finish
+              </button>
+            </td>
+
+          </tr>
+
+        </tbody>
+
+      </table>
+
+    </div>
+
+    <!-- RIGHT -->
+
+    <div class="stats-panel">
+
+      <h2>Statistics</h2>
+
+      <div class="stat-card">
+
+        <span class="value">
+            {{ stats?.activeCalls ?? 0 }}
+        </span>
+
+        <span class="label">
+            Active Calls
+        </span>
+
+        </div>
+
+        <div class="stat-card critical">
+
+        <span class="value">
+            {{ stats?.criticalCases ?? 0 }}
+        </span>
+
+        <span class="label">
+            Critical Cases
+        </span>
+
+        </div>
+
+    </div>
+
+  </div>
+
+</div>

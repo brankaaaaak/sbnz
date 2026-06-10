@@ -10,3 +10,8 @@ export interface FinalResult {
   reasons: string[];
   callId: number;
 }
+
+export interface SystemStats {
+  activeCalls: number;
+  criticalCases: number;
+}
