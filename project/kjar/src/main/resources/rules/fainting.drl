@@ -6,8 +6,6 @@ import com.ftn.sbnz.model.enums.*;
 import com.ftn.sbnz.model.facts.*;
 
 rule "Nivo2 - FAINTING + reaguje -> GREEN (reaguje + normalan puls)"
-activation-group "fainting-triage"
-salience 50
 when
     $call : Call(
         $id : id,
@@ -16,7 +14,11 @@ when
 
     $assessment : PatientAssessment(callId == $id,
         consciousnessLevel == ConsciousnessLevel.UNCONSCIOUS_RESPONSIVE,
-        elevatedPulse == false)
+        elevatedPulse == false,
+        irregularBreathing == false,
+        elevatedTemperature == false,
+        bloodPressure != BloodPressure.HYPOTENSION
+        )
 then
     modify($assessment){
         setPreliminaryLevel(EmergencyLevel.GREEN)
@@ -26,8 +28,6 @@ then
 end
 
 rule "Nivo2 - FAINTING + ne reaguje + normalan puls -> YELLOW"
-salience 50
-activation-group "fainting-triage"
 when
     $call : Call(
         $id : id,
@@ -37,8 +37,10 @@ when
     $assessment : PatientAssessment(
         callId == $id,
         consciousnessLevel == ConsciousnessLevel.UNCONSCIOUS_UNRESPONSIVE,
-        elevatedPulse == false
-    )
+        elevatedPulse == false,
+        irregularBreathing == false,
+        elevatedTemperature == false,
+        bloodPressure != BloodPressure.HYPOTENSION)
 then
     modify($assessment){
         setPreliminaryLevel(EmergencyLevel.YELLOW)
@@ -48,8 +50,6 @@ then
 end
 
 rule "Nivo2 - FAINTING + reaguje + ubrzan puls i/ili nepravilno disanje -> YELLOW"
-activation-group "fainting-triage"
-salience 50
 when
     $call : Call(
         $id : id,
@@ -59,8 +59,9 @@ when
     $assessment : PatientAssessment(
         callId == $id,
         consciousnessLevel == ConsciousnessLevel.UNCONSCIOUS_RESPONSIVE,
-        (elevatedPulse == true || irregularBreathing == true)
-    )
+        (elevatedPulse == true || irregularBreathing == true),
+        elevatedTemperature == false,
+        bloodPressure != BloodPressure.HYPOTENSION)
 
 then
     modify($assessment){
@@ -71,8 +72,6 @@ then
 end
 
 rule "Nivo2 - FAINTING + ne reaguje + ubrzan puls i/ili nepravilno disanje -> RED"
-salience 80
-activation-group "fainting-triage"
 when
     $call : Call(
         $id : id,
@@ -82,8 +81,9 @@ when
     $assessment : PatientAssessment(
         callId == $id,
         consciousnessLevel == ConsciousnessLevel.UNCONSCIOUS_UNRESPONSIVE,
-        (elevatedPulse == true || irregularBreathing == true)
-    )
+        (elevatedPulse == true || irregularBreathing == true),
+        elevatedTemperature == false,
+        bloodPressure != BloodPressure.HYPOTENSION)
 
 then
     modify($assessment){
@@ -94,8 +94,6 @@ then
 end
 
 rule "Nivo2 - FAINTING + povisena temperatura -> RED"
-activation-group "fainting-triage"
-salience 100
 when
     $call : Call(
         $id : id,
@@ -115,8 +113,6 @@ then
 end
 
 rule "Nivo2 - FAINTING + hipotenzija -> GREEN"
-activation-group "fainting-triage"
-salience 60
 when
     $call : Call(
         $id : id,
@@ -125,7 +121,8 @@ when
 
     $assessment : PatientAssessment(
         callId == $id,
-        bloodPressure == BloodPressure.HYPOTENSION
+        bloodPressure == BloodPressure.HYPOTENSION,
+        elevatedTemperature == false
     )
 then
     modify($assessment){
@@ -142,14 +139,14 @@ when
     $assessment : PatientAssessment(
         callId == $id,
         preliminaryLevel == EmergencyLevel.GREEN,
-        finalized == false,
-        symptomsEntered == true
+        finalized == false
     )
 
     FaintingSymptoms(
         callId == $id,
         diabetes == true,
-        tookTherapy == false
+        tookTherapy == false,
+        painEarlier == false
     )
 then
     modify($assessment){
@@ -167,14 +164,14 @@ when
     $assessment : PatientAssessment(
         callId == $id,
         preliminaryLevel == EmergencyLevel.YELLOW,
-        finalized == false,
-        symptomsEntered == true
+        finalized == false
     )
 
     FaintingSymptoms(
         callId == $id,
         diabetes == true,
-        tookTherapy == false
+        tookTherapy == false,
+        painEarlier == false
     )
 then
     modify($assessment){
@@ -192,14 +189,14 @@ when
     $assessment : PatientAssessment(
         callId == $id,
         preliminaryLevel == EmergencyLevel.RED,
-        finalized == false,
-        symptomsEntered == true
+        finalized == false
     )
 
     FaintingSymptoms(
         callId == $id,
         diabetes == true,
-        tookTherapy == false
+        tookTherapy == false,
+        painEarlier == false
     )
 then
     modify($assessment){
@@ -211,15 +208,13 @@ then
 end
 
 rule "Nivo3 - dijabetes + terapija -> RED"
-salience 100
 when
     $call : Call($id : id, incidentType == IncidentType.FAINTING)
 
     $assessment : PatientAssessment(
         callId == $id,
         preliminaryLevel != null,
-        finalized == false,
-        symptomsEntered == true
+        finalized == false
     )
 
     FaintingSymptoms(
@@ -243,12 +238,13 @@ when
     $assessment : PatientAssessment(
         callId == $id,
         preliminaryLevel == EmergencyLevel.GREEN,
-        finalized == false,
-        symptomsEntered == true
+        finalized == false
     )
 
     FaintingSymptoms(
         callId == $id,
+        diabetes == false,
+        tookTherapy == false,
         painEarlier == true
     )
 then
@@ -267,7 +263,6 @@ when
     $assessment : PatientAssessment(
         callId == $id,
         finalized == false,
-        symptomsEntered == true,
         (preliminaryLevel == EmergencyLevel.YELLOW
             || preliminaryLevel == EmergencyLevel.RED
         )
@@ -275,6 +270,8 @@ when
 
     FaintingSymptoms(
         callId == $id,
+        diabetes == false,
+        tookTherapy == false,
         painEarlier == true
     )
 then
@@ -284,4 +281,30 @@ then
     };
 
     System.out.println("Nivo3: YELLOW/RED + bol -> RED " + $id);
+end
+
+rule "Nivo3 - FAINTING default"
+when
+    $call : Call($id : id, incidentType == IncidentType.FAINTING)
+
+    $assessment : PatientAssessment(
+        callId == $id,
+        finalized == false,
+        preliminaryLevel != null
+        
+    )
+
+    FaintingSymptoms(
+        callId == $id,
+        diabetes == false,
+        tookTherapy == false,
+        painEarlier == false
+    )
+then
+    modify($assessment){
+        setFinalLevel($assessment.getPreliminaryLevel()),
+        setFinalized(true)
+    };
+
+    System.out.println("Nivo3: FAINTING default " + $id);
 end

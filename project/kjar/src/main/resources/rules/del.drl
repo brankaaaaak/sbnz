@@ -3,7 +3,6 @@ package com.ftn.sbnz.rules;
 import com.ftn.sbnz.model.events.FinishCallEvent;
 import com.ftn.sbnz.model.models.Call;
 import com.ftn.sbnz.model.assessment.PatientAssessment;
-import com.ftn.sbnz.model.models.CallerAdvice;
 import com.ftn.sbnz.model.symptoms.*;
 import com.ftn.sbnz.model.facts.*;
 
@@ -12,11 +11,9 @@ when
     $e : FinishCallEvent($callId : callId)
     $c : Call(id == $callId)
     $a : PatientAssessment(callId == $callId)
-    $ad : CallerAdvice(callId == $callId)
 then
     delete($c);
     delete($a);
-    delete($ad);
 end
 
 rule "Finish call - cleanup head symptoms"

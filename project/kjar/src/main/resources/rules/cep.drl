@@ -1,0 +1,136 @@
+package com.ftn.sbnz.rules;
+
+import com.ftn.sbnz.model.events.CallReceivedEvent;
+import com.ftn.sbnz.model.assessment.PatientAssessment;
+import com.ftn.sbnz.model.events.SystemAlert;
+import com.ftn.sbnz.model.enums.EmergencyLevel;
+
+declare CallReceivedEvent
+    @role(event)
+    @timestamp(timestamp)
+end
+
+declare PatientAssessment
+    @role(event)
+end
+
+rule "CEP - High call volume (10 min)"
+when
+    $count : Number(intValue >= 5) from accumulate(
+        CallReceivedEvent() over window:time(10m),
+        count(1)
+    )
+then
+    System.out.println("CEP ALERT: High call volume");
+    insert(new SystemAlert("HIGH_CALL_VOLUME"));
+end
+
+rule "CEP - RED emergency spike (10 min)"
+when
+    $red : Number(intValue >= 3) from accumulate(
+        PatientAssessment(finalLevel == EmergencyLevel.RED)
+        over window:time(10m),
+        count(1)
+    )
+then
+    System.out.println("CEP: RED spike detected");
+    insert(new SystemAlert("RED_SPIKE"));
+end
+
+rule "CEP - System overload (calls + red cases)"
+when
+    $calls : Number(intValue >= 5) from accumulate(
+        CallReceivedEvent() over window:time(10m),
+        count(1)
+    )
+    $red : Number(intValue >= 2) from accumulate(
+        PatientAssessment(finalLevel == EmergencyLevel.RED)
+        over window:time(10m),
+        count(1)
+    )
+then
+    System.out.println("CEP: SYSTEM OVERLOAD");
+    insert(new SystemAlert("SYSTEM_OVERLOAD"));
+end
+
+rule "CEP - Slow system stress"
+when
+    $calls : Number(intValue >= 8) from accumulate(
+        CallReceivedEvent() over window:time(30m),
+        count(1)
+    )
+then
+    System.out.println("CEP: Slow system stress detected");
+    insert(new SystemAlert("SLOW_BURN"));
+end
+
+rule "CEP - Mixed severity pressure"
+when
+    $red : Number(intValue >= 2) from accumulate(
+        PatientAssessment(finalLevel == EmergencyLevel.RED)
+        over window:time(10m),
+        count(1)
+    )
+    $yellow : Number(intValue >= 3) from accumulate(
+        PatientAssessment(finalLevel == EmergencyLevel.YELLOW)
+        over window:time(10m),
+        count(1)
+    )
+then
+    System.out.println("CEP: Mixed severity load");
+    insert(new SystemAlert("MIXED_SEVERITY"));
+end
+
+rule "CEP - Emergency Crisis Detection"
+when
+
+    $calls : Number() from accumulate(
+        CallReceivedEvent() over window:time(15m),
+        count(1)
+    )
+
+    $red : Number() from accumulate(
+        PatientAssessment(finalLevel == EmergencyLevel.RED)
+        over window:time(15m),
+        count(1)
+    )
+
+    $yellow : Number() from accumulate(
+        PatientAssessment(finalLevel == EmergencyLevel.YELLOW)
+        over window:time(15m),
+        count(1)
+    )
+
+    eval(
+        ($red.intValue() * 3)
+        +
+        ($yellow.intValue())
+        +
+        ($calls.intValue())
+        >= 10
+    )
+
+then
+
+    int score =
+        ($red.intValue() * 3)
+        +
+        ($yellow.intValue())
+        +
+        ($calls.intValue());
+
+    String severity =
+        score >= 20 ? "CRITICAL" :
+        score >= 15 ? "HIGH" :
+        "MODERATE";
+
+    System.out.println(
+        "CEP CRISIS DETECTED -> "
+        + severity
+        + " score="
+        + score
+    );
+
+    insert(new SystemAlert("CRISIS_" + severity));
+
+end

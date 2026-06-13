@@ -51,7 +51,7 @@ rule "Nivo3 - Extremity injury bleeding -> RED"
 no-loop true
 when
     $call : Call($id : id, incidentType == IncidentType.INJURY_EXTREMITY)
-    $a : PatientAssessment(callId == $id, preliminaryLevel != null, finalized == false, symptomsEntered == true)
+    $a : PatientAssessment(callId == $id, preliminaryLevel != null, finalized == false)
     $symptoms : InjuryExtremitySymptoms(
         callId == $id,
         bleeding == true
@@ -69,7 +69,7 @@ rule "Nivo3 - Extremity injury GREEN + open fracture -> YELLOW"
 no-loop true
 when
     $call : Call($id : id, incidentType == IncidentType.INJURY_EXTREMITY)
-    $a : PatientAssessment(callId == $id, preliminaryLevel == EmergencyLevel.GREEN, finalized == false, symptomsEntered == true)
+    $a : PatientAssessment(callId == $id, preliminaryLevel == EmergencyLevel.GREEN, finalized == false)
     $symptoms : InjuryExtremitySymptoms(
         callId == $id,
         openFracture == true,
@@ -88,7 +88,7 @@ rule "Nivo3 - Extremity injury YELLOW + open fracture -> RED"
 no-loop true
 when
     $call : Call($id : id, incidentType == IncidentType.INJURY_EXTREMITY)
-    $a : PatientAssessment(callId == $id, preliminaryLevel == EmergencyLevel.YELLOW, finalized == false, symptomsEntered == true)
+    $a : PatientAssessment(callId == $id, preliminaryLevel == EmergencyLevel.YELLOW, finalized == false)
     $symptoms : InjuryExtremitySymptoms(
         callId == $id,
         openFracture == true,
@@ -100,4 +100,42 @@ then
         setFinalized(true)
     };
     System.out.println("Nivo3 - Extremity injury: YELLOW + open fracture -> RED " + $id);
+end
+
+// Preliminarno RED + otvoren prelom -> RED
+rule "Nivo3 - Extremity injury RED + open fracture -> RED"
+no-loop true
+when
+    $call : Call($id : id, incidentType == IncidentType.INJURY_EXTREMITY)
+    $a : PatientAssessment(callId == $id, preliminaryLevel == EmergencyLevel.RED, finalized == false)
+    $symptoms : InjuryExtremitySymptoms(
+        callId == $id,
+        openFracture == true,
+        bleeding == false
+    )
+then
+    modify($a){
+        setFinalLevel(EmergencyLevel.RED),
+        setFinalized(true)
+    };
+    System.out.println("Nivo3 - Extremity injury: RED + open fracture -> RED " + $id);
+end
+
+// default
+rule "Nivo3 - Extremity injury default (nema posebnih simptoma)"
+no-loop true
+when
+    $call : Call($id : id, incidentType == IncidentType.INJURY_EXTREMITY)
+    $assessment : PatientAssessment(callId == $id, preliminaryLevel != null, finalized == false)
+    $symptoms : InjuryExtremitySymptoms(
+        callId == $id,
+        openFracture == false,
+        bleeding == false
+    )
+then
+    modify($assessment){
+        setFinalLevel($assessment.getPreliminaryLevel()),
+        setFinalized(true)
+    };
+    System.out.println("Nivo3 - Extremity injury default" + $id);
 end
