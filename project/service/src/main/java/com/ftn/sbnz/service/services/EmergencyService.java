@@ -4,6 +4,7 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.kie.api.runtime.KieSession;
@@ -17,6 +18,9 @@ import com.ftn.sbnz.model.events.FinishCallEvent;
 import com.ftn.sbnz.model.models.Call;
 import com.ftn.sbnz.model.stats.SystemStats;
 import com.ftn.sbnz.service.drools.DroolsMemory;
+import com.ftn.sbnz.model.events.SystemAlert;
+import org.kie.api.runtime.ClassObjectFilter;
+import java.util.HashSet;
 import com.ftn.sbnz.service.dto.CallDTO;
 import com.ftn.sbnz.service.dto.FinalAssessmentResponse;
 import com.ftn.sbnz.service.dto.PreliminaryAssessmentResponse;
@@ -32,15 +36,28 @@ public class EmergencyService {
         private final DroolsMemory droolsMemory;
         private final SymptomFactory symptomFactory;
         private final CallMapper callMapper;
+        private final AlertPublisher alertPublisher;
 
         public EmergencyService(
                         DroolsMemory droolsMemory,
                         SymptomFactory symptomFactory,
-                        CallMapper callMapper) {
+                        CallMapper callMapper,
+                        AlertPublisher alertPublisher) {
 
                 this.droolsMemory = droolsMemory;
                 this.symptomFactory = symptomFactory;
                 this.callMapper = callMapper;
+                this.alertPublisher = alertPublisher;
+        }
+
+        // Pokupiti sve SystemAlert objekte koji nisu bili u sesiji prije fireAllRules()
+        // i publishovati ih na WebSocket
+        private void publishNewAlerts(KieSession session, Set<Object> before) {
+                session.getObjects(new ClassObjectFilter(SystemAlert.class))
+                                .stream()
+                                .filter(obj -> !before.contains(obj))
+                                .map(SystemAlert.class::cast)
+                                .forEach(alertPublisher::publish);
         }
 
         public List<CallDTO> getAllCalls() {
@@ -100,10 +117,13 @@ public class EmergencyService {
                         session.insert(call);
 
                         session.insert(new CallReceivedEvent(
-                                call.getId(),
-                                System.currentTimeMillis()
-                        ));
+                                        call.getId(),
+                                        System.currentTimeMillis()));
+
+                        Set<Object> beforeFire = new HashSet<>(
+                                        session.getObjects(new ClassObjectFilter(SystemAlert.class)));
                         session.fireAllRules();
+                        publishNewAlerts(session, beforeFire);
 
                         PatientAssessment assessment = session.getObjects()
                                         .stream()
@@ -182,7 +202,10 @@ public class EmergencyService {
 
                         session.insert(symptoms);
 
+                        Set<Object> beforeFire = new HashSet<>(
+                                        session.getObjects(new ClassObjectFilter(SystemAlert.class)));
                         session.fireAllRules();
+                        publishNewAlerts(session, beforeFire);
 
                         FinalAssessmentResponse response = new FinalAssessmentResponse();
 
@@ -261,7 +284,10 @@ public class EmergencyService {
 
                         session.insert(new FinishCallEvent(callId));
 
+                        Set<Object> beforeFire = new HashSet<>(
+                                        session.getObjects(new ClassObjectFilter(SystemAlert.class)));
                         session.fireAllRules();
+                        publishNewAlerts(session, beforeFire);
                 }
         }
 }

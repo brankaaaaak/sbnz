@@ -11,10 +11,12 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.ftn.sbnz.model.enums.ConsciousnessLevel;
 import com.ftn.sbnz.model.enums.IncidentType;
+import com.ftn.sbnz.model.events.SystemAlert;
 import com.ftn.sbnz.model.models.Call;
 import com.ftn.sbnz.service.dto.CallDTO;
 import com.ftn.sbnz.service.dto.FinalAssessmentResponse;
@@ -22,6 +24,7 @@ import com.ftn.sbnz.service.dto.PreliminaryAssessmentResponse;
 import com.ftn.sbnz.service.dto.SymptomFieldDTO;
 import com.ftn.sbnz.service.dto.SymptomsRequest;
 import com.ftn.sbnz.service.dto.SystemStatsDTO;
+import com.ftn.sbnz.service.services.AlertPublisher;
 import com.ftn.sbnz.service.services.EmergencyService;
 
 @CrossOrigin(origins = "http://localhost:4200")
@@ -77,5 +80,16 @@ public class EmergencyController {
         emergencyService.finishCall(callId);
 
         return ResponseEntity.noContent().build();
+    }
+
+    @Autowired
+    private AlertPublisher alertPublisher;
+
+    @PostMapping("/test/alert")
+    public ResponseEntity<Void> testAlert(@RequestParam String type) {
+        SystemAlert alert = new SystemAlert();
+        alert.setType(type);
+        alertPublisher.publish(alert);
+        return ResponseEntity.ok().build();
     }
 }
