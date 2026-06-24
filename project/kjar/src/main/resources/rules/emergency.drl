@@ -36,7 +36,7 @@ no-loop true
 when
     $call : Call($id : id, $patient : patient)
 
-    Patient(vitalSigns.temperature > 37.5) from $patient
+    Patient(vitalSigns.temperature > 37.1) from $patient
 
     $assessment : PatientAssessment(callId == $id)
 
