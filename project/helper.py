@@ -68,7 +68,7 @@ def scenario_high_call_volume():
         resp = create_call("STING", 120, 80, 70, 36.5, "CONSCIOUS", True)
         print(f"  Poziv {i+1}: ID={resp['callId']}, preliminarni={resp['preliminaryLevel']}")
         add_symptoms(resp['callId'], "STING", {"skinReaction": False, "choking": False, "systemicSwelling": False, "previousSevereReaction": False})
-        time.sleep(1)  
+        time.sleep(5)  
 
 def scenario_red_spike():
     """Aktivira RED_SPIKE: 3 RED assessment-a u prozoru."""
@@ -79,7 +79,7 @@ def scenario_red_spike():
         print(f"  Poziv {i+1}: ID={resp['callId']}, preliminarni={resp['preliminaryLevel']}")
         # Dodajemo simptom koji finalizuje RED (npr. choking)
         add_symptoms(resp['callId'], "STING", {"choking": True, "systemicSwelling": False, "skinReaction": False, "previousSevereReaction": False})
-        time.sleep(1)
+        time.sleep(5)
 
 def scenario_system_overload():
     """Aktivira SYSTEM_OVERLOAD: 5 poziva + 2 RED u prozoru."""
@@ -89,13 +89,13 @@ def scenario_system_overload():
         resp = create_call("STING", 100, 70, 90, 37.0, "UNCONSCIOUS_UNRESPONSIVE", True)
         add_symptoms(resp['callId'], "STING", {"choking": True, "systemicSwelling": False, "skinReaction": False, "previousSevereReaction": False})
         print(f"  RED poziv {i+1}: ID={resp['callId']}")
-        time.sleep(1)
+        time.sleep(5)
     # 3 zelena
     for i in range(3):
         resp = create_call("STING", 120, 80, 70, 36.5, "CONSCIOUS", True)
         add_symptoms(resp['callId'], "STING", {"skinReaction": False, "choking": False, "systemicSwelling": False, "previousSevereReaction": False})
         print(f"  Zeleni poziv {i+3}: ID={resp['callId']}")
-        time.sleep(1)
+        time.sleep(5)
 
 def scenario_mixed_severity():
     """Aktivira MIXED_SEVERITY: 2 RED + 3 YELLOW u prozoru."""
@@ -105,13 +105,13 @@ def scenario_mixed_severity():
         resp = create_call("STING", 100, 70, 90, 37.0, "UNCONSCIOUS_UNRESPONSIVE", True)
         add_symptoms(resp['callId'], "STING", {"choking": True, "systemicSwelling": False, "skinReaction": False, "previousSevereReaction": False})
         print(f"  RED {i+1}: ID={resp['callId']}")
-        time.sleep(1)
+        time.sleep(5)
     # 3 YELLOW (STING + svjestan + nepravilno disanje -> preliminarni YELLOW, plus simptomi da finalizuje YELLOW)
     for i in range(3):
         resp = create_call("STING", 120, 80, 100, 37.0, "CONSCIOUS", False)  # nepravilno disanje -> YELLOW
         add_symptoms(resp['callId'], "STING", {"skinReaction": False, "choking": False, "systemicSwelling": False, "previousSevereReaction": False})
         print(f"  YELLOW {i+1}: ID={resp['callId']}")
-        time.sleep(1)
+        time.sleep(5)
 
 def scenario_crisis():
     """Aktivira CRISIS (scoring)."""
@@ -123,17 +123,58 @@ def scenario_crisis():
         resp = create_call("STING", 100, 70, 90, 37.0, "UNCONSCIOUS_UNRESPONSIVE", True)
         add_symptoms(resp['callId'], "STING", {"choking": True, "systemicSwelling": False, "skinReaction": False, "previousSevereReaction": False})
         print(f"  RED {i+1}: ID={resp['callId']}")
-        time.sleep(1)
+        time.sleep(5)
     for i in range(2):
         resp = create_call("STING", 120, 80, 100, 37.0, "CONSCIOUS", False)
         add_symptoms(resp['callId'], "STING", {"skinReaction": False, "choking": False, "systemicSwelling": False, "previousSevereReaction": False})
         print(f"  YELLOW {i+1}: ID={resp['callId']}")
-        time.sleep(1)
+        time.sleep(5)
     for i in range(3):
         resp = create_call("STING", 120, 80, 70, 36.5, "CONSCIOUS", True)
         add_symptoms(resp['callId'], "STING", {"skinReaction": False, "choking": False, "systemicSwelling": False, "previousSevereReaction": False})
         print(f"  Zeleni {i+1}: ID={resp['callId']}")
-        time.sleep(1)
+        time.sleep(5)
+
+def scenario_accelerating_call_trend():
+    """Aktivira ACCELERATING_CALL_TREND: 6 poziva brzo, od toga 4+ u zadnjih 5 min."""
+    print("\n=== SCENARIO: ACCELERATING_CALL_TREND ===")
+    for i in range(6):
+        resp = create_call("STING", 120, 80, 70, 36.5, "CONSCIOUS", True)
+        add_symptoms(resp['callId'], "STING", {"skinReaction": False, "choking": False, "systemicSwelling": False, "previousSevereReaction": False})
+        print(f"  Brzi poziv {i+1}: ID={resp['callId']}")
+        time.sleep(10)
+
+def scenario_high_average_severity():
+    """Aktivira HIGH_AVERAGE_SEVERITY: 4 finalizovana slucaja sa prosjekom ozbiljnosti >= 2.3."""
+    print("\n=== SCENARIO: HIGH_AVERAGE_SEVERITY ===")
+    # 2 RED + 2 YELLOW => prosjek severityScore = (3 + 3 + 2 + 2) / 4 = 2.5
+    for i in range(2):
+        resp = create_call("STING", 100, 70, 90, 37.0, "UNCONSCIOUS_UNRESPONSIVE", True)
+        add_symptoms(resp['callId'], "STING", {"choking": True, "systemicSwelling": False, "skinReaction": False, "previousSevereReaction": False})
+        print(f"  RED {i+1}: ID={resp['callId']}")
+        time.sleep(5)
+
+    for i in range(2):
+        resp = create_call("STING", 120, 80, 100, 37.0, "CONSCIOUS", False)
+        add_symptoms(resp['callId'], "STING", {"skinReaction": False, "choking": False, "systemicSwelling": False, "previousSevereReaction": False})
+        print(f"  YELLOW {i+1}: ID={resp['callId']}")
+        time.sleep(5)
+
+def scenario_high_red_ratio():
+    """Aktivira HIGH_RED_RATIO: RED slucajevi su najmanje 50% finalizovanih slucajeva."""
+    print("\n=== SCENARIO: HIGH_RED_RATIO ===")
+    # 2 RED + 2 GREEN => RED ratio = 2 / 4 = 0.5
+    for i in range(2):
+        resp = create_call("STING", 100, 70, 90, 37.0, "UNCONSCIOUS_UNRESPONSIVE", True)
+        add_symptoms(resp['callId'], "STING", {"choking": True, "systemicSwelling": False, "skinReaction": False, "previousSevereReaction": False})
+        print(f"  RED {i+1}: ID={resp['callId']}")
+        time.sleep(5)
+
+    for i in range(2):
+        resp = create_call("STING", 120, 80, 70, 36.5, "CONSCIOUS", True)
+        add_symptoms(resp['callId'], "STING", {"skinReaction": False, "choking": False, "systemicSwelling": False, "previousSevereReaction": False})
+        print(f"  GREEN {i+1}: ID={resp['callId']}")
+        time.sleep(5)
 
 def main():
     print("===== CEP TEST SKRIPTA (prirodno aktiviranje) =====")
@@ -143,6 +184,9 @@ def main():
     print("3 - SYSTEM_OVERLOAD (5 poziva + 2 RED u 10 min)")
     print("4 - MIXED_SEVERITY (2 RED + 3 YELLOW u 10 min)")
     print("5 - CRISIS (skor >=10 u 15 min)")
+    print("6 - ACCELERATING_CALL_TREND (trend rasta poziva)")
+    print("7 - HIGH_AVERAGE_SEVERITY (visok prosjek ozbiljnosti)")
+    print("8 - HIGH_RED_RATIO (visok procenat RED slucajeva)")
     choice = input("Unesi broj: ").strip()
 
     if choice == "1":
@@ -155,6 +199,12 @@ def main():
         scenario_mixed_severity()
     elif choice == "5":
         scenario_crisis()
+    elif choice == "6":
+        scenario_accelerating_call_trend()
+    elif choice == "7":
+        scenario_high_average_severity()
+    elif choice == "8":
+        scenario_high_red_ratio()
     else:
         print("Error")
 

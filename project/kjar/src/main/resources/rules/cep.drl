@@ -170,6 +170,121 @@ then
     delete($alert);
 end
 
+rule "CEP - Accelerating call trend"
+no-loop true
+when
+    $recent : Number(intValue >= 4) from accumulate(
+        CallReceivedEvent() over window:time(5m),
+        count(1)
+    )
+    $longer : Number(intValue >= 6) from accumulate(
+        CallReceivedEvent() over window:time(15m),
+        count(1)
+    )
+    eval($recent.doubleValue() / $longer.doubleValue() >= 0.65)
+    not SystemAlert(type == "ACCELERATING_CALL_TREND")
+then
+    System.out.println("CEP: Accelerating call trend");
+    insert(new SystemAlert("ACCELERATING_CALL_TREND"));
+end
+
+rule "CEP - Resolve accelerating call trend"
+no-loop true
+when
+    $alert : SystemAlert(type == "ACCELERATING_CALL_TREND")
+    $recent : Number() from accumulate(
+        CallReceivedEvent() over window:time(5m),
+        count(1)
+    )
+    $longer : Number() from accumulate(
+        CallReceivedEvent() over window:time(15m),
+        count(1)
+    )
+    eval($longer.intValue() < 6 || $recent.doubleValue() / $longer.doubleValue() < 0.65)
+then
+    System.out.println("CEP RESOLVED: Accelerating call trend");
+    delete($alert);
+end
+
+rule "CEP - High average severity"
+no-loop true
+when
+    $count : Number(intValue >= 4) from accumulate(
+        PatientAssessment(finalized == true)
+        over window:time(15m),
+        count(1)
+    )
+    $avg : Number(doubleValue >= 2.3) from accumulate(
+        PatientAssessment(finalized == true, $score : severityScore)
+        over window:time(15m),
+        average($score)
+    )
+    not SystemAlert(type == "HIGH_AVERAGE_SEVERITY")
+then
+    System.out.println("CEP: High average severity");
+    insert(new SystemAlert("HIGH_AVERAGE_SEVERITY"));
+end
+
+rule "CEP - Resolve high average severity"
+no-loop true
+when
+    $alert : SystemAlert(type == "HIGH_AVERAGE_SEVERITY")
+    $count : Number() from accumulate(
+        PatientAssessment(finalized == true)
+        over window:time(15m),
+        count(1)
+    )
+    $avg : Number() from accumulate(
+        PatientAssessment(finalized == true, $score : severityScore)
+        over window:time(15m),
+        average($score)
+    )
+    eval($count.intValue() < 4 || $avg.doubleValue() < 2.3)
+then
+    System.out.println("CEP RESOLVED: High average severity");
+    delete($alert);
+end
+
+rule "CEP - High RED ratio"
+no-loop true
+when
+    $total : Number(intValue >= 4) from accumulate(
+        PatientAssessment(finalized == true)
+        over window:time(15m),
+        count(1)
+    )
+    $red : Number() from accumulate(
+        PatientAssessment(finalized == true, finalLevel == EmergencyLevel.RED)
+        over window:time(15m),
+        count(1)
+    )
+    eval($red.doubleValue() / $total.doubleValue() >= 0.5)
+    not SystemAlert(type == "HIGH_RED_RATIO")
+then
+    System.out.println("CEP: High RED ratio");
+    insert(new SystemAlert("HIGH_RED_RATIO"));
+end
+
+rule "CEP - Resolve high RED ratio"
+no-loop true
+when
+    $alert : SystemAlert(type == "HIGH_RED_RATIO")
+    $total : Number() from accumulate(
+        PatientAssessment(finalized == true)
+        over window:time(15m),
+        count(1)
+    )
+    $red : Number() from accumulate(
+        PatientAssessment(finalized == true, finalLevel == EmergencyLevel.RED)
+        over window:time(15m),
+        count(1)
+    )
+    eval($total.intValue() < 4 || $red.doubleValue() / $total.doubleValue() < 0.5)
+then
+    System.out.println("CEP RESOLVED: High RED ratio");
+    delete($alert);
+end
+
 rule "CEP - Emergency Crisis Detection"
 no-loop true
 when

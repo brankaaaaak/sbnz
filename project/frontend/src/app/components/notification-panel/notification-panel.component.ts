@@ -118,6 +118,9 @@ export class NotificationPanelComponent implements OnInit, OnDestroy {
       'SYSTEM_OVERLOAD': 'High call volume + critical patients',
       'SLOW_BURN': '8+ calls in the last 30 minutes',
       'MIXED_SEVERITY': 'High mixed-priority load (red + yellow)',
+      'ACCELERATING_CALL_TREND': 'Call volume is accelerating rapidly',
+      'HIGH_AVERAGE_SEVERITY': 'Average case severity is high',
+      'HIGH_RED_RATIO': 'High share of red-priority cases',
       'CRISIS_MODERATE': 'Crisis situation — moderate severity',
       'CRISIS_HIGH': 'Crisis situation — high severity',
       'CRISIS_CRITICAL': 'CRITICAL CRISIS SITUATION',
@@ -127,7 +130,13 @@ export class NotificationPanelComponent implements OnInit, OnDestroy {
 
   private getSeverity(type: string): 'critical' | 'high' | 'medium' {
     if (type.includes('CRISIS_CRITICAL') || type === 'SYSTEM_OVERLOAD') return 'critical';
-    if (type.includes('CRISIS') || type === 'RED_SPIKE' || type === 'MIXED_SEVERITY') return 'high';
+    if (
+      type.includes('CRISIS') ||
+      type === 'RED_SPIKE' ||
+      type === 'MIXED_SEVERITY' ||
+      type === 'HIGH_AVERAGE_SEVERITY' ||
+      type === 'HIGH_RED_RATIO'
+    ) return 'high';
     return 'medium';
   }
 

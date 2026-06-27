@@ -101,4 +101,17 @@ public class PatientAssessment {
         this.finalized = finalized;
     }
 
+    public int getSeverityScore() {
+        if (finalLevel == EmergencyLevel.RED) {
+            return 3;
+        }
+        if (finalLevel == EmergencyLevel.YELLOW) {
+            return 2;
+        }
+        if (finalLevel == EmergencyLevel.GREEN) {
+            return 1;
+        }
+        return 0;
+    }
+
 }
