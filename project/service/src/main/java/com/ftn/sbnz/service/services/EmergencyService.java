@@ -20,7 +20,6 @@ import com.ftn.sbnz.model.stats.SystemStats;
 import com.ftn.sbnz.service.drools.DroolsMemory;
 import com.ftn.sbnz.model.events.SystemAlert;
 import org.kie.api.runtime.ClassObjectFilter;
-import java.util.HashSet;
 import com.ftn.sbnz.service.dto.CallDTO;
 import com.ftn.sbnz.service.dto.FinalAssessmentResponse;
 import com.ftn.sbnz.service.dto.PreliminaryAssessmentResponse;
@@ -50,14 +49,24 @@ public class EmergencyService {
                 this.alertPublisher = alertPublisher;
         }
 
-        // Pokupiti sve SystemAlert objekte koji nisu bili u sesiji prije fireAllRules()
-        // i publishovati ih na WebSocket
-        private void publishNewAlerts(KieSession session, Set<Object> before) {
-                session.getObjects(new ClassObjectFilter(SystemAlert.class))
+        private Set<String> activeAlertTypes(KieSession session) {
+                return session.getObjects(new ClassObjectFilter(SystemAlert.class))
                                 .stream()
-                                .filter(obj -> !before.contains(obj))
                                 .map(SystemAlert.class::cast)
-                                .forEach(alertPublisher::publish);
+                                .map(SystemAlert::getType)
+                                .collect(Collectors.toSet());
+        }
+
+        private void publishAlertChanges(KieSession session, Set<String> before) {
+                Set<String> after = activeAlertTypes(session);
+
+                before.stream()
+                                .filter(type -> !after.contains(type))
+                                .forEach(alertPublisher::publishResolved);
+
+                after.stream()
+                                .filter(type -> !before.contains(type))
+                                .forEach(alertPublisher::publishActive);
         }
 
         public List<CallDTO> getAllCalls() {
@@ -120,10 +129,9 @@ public class EmergencyService {
                                         call.getId(),
                                         System.currentTimeMillis()));
 
-                        Set<Object> beforeFire = new HashSet<>(
-                                        session.getObjects(new ClassObjectFilter(SystemAlert.class)));
+                        Set<String> beforeFire = activeAlertTypes(session);
                         session.fireAllRules();
-                        publishNewAlerts(session, beforeFire);
+                        publishAlertChanges(session, beforeFire);
 
                         PatientAssessment assessment = session.getObjects()
                                         .stream()
@@ -202,10 +210,9 @@ public class EmergencyService {
 
                         session.insert(symptoms);
 
-                        Set<Object> beforeFire = new HashSet<>(
-                                        session.getObjects(new ClassObjectFilter(SystemAlert.class)));
+                        Set<String> beforeFire = activeAlertTypes(session);
                         session.fireAllRules();
-                        publishNewAlerts(session, beforeFire);
+                        publishAlertChanges(session, beforeFire);
 
                         FinalAssessmentResponse response = new FinalAssessmentResponse();
 
@@ -284,10 +291,9 @@ public class EmergencyService {
 
                         session.insert(new FinishCallEvent(callId));
 
-                        Set<Object> beforeFire = new HashSet<>(
-                                        session.getObjects(new ClassObjectFilter(SystemAlert.class)));
+                        Set<String> beforeFire = activeAlertTypes(session);
                         session.fireAllRules();
-                        publishNewAlerts(session, beforeFire);
+                        publishAlertChanges(session, beforeFire);
                 }
         }
 }

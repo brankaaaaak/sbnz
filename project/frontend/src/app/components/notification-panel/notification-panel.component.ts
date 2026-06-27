@@ -5,6 +5,7 @@ import SockJS from 'sockjs-client';
 
 export interface SystemAlert {
   type: string;
+  active?: boolean;
   timestamp?: string;
 }
 
@@ -61,6 +62,19 @@ export class NotificationPanelComponent implements OnInit, OnDestroy {
   }
 
   private handleAlert(alert: SystemAlert): void {
+
+    if (alert.active === false) {
+      this.removeAlert(alert.type);
+      return;
+    }
+
+    // Za CRISIS upgrade — ako postoji stariji CRISIS alert nižeg nivoa, ukloni ga
+    if (alert.type.startsWith('CRISIS_')) {
+      this.notifications = this.notifications.filter(
+        n => !n.type.startsWith('CRISIS_')
+      );
+    }
+
     const notification: AlertNotification = {
       id: ++this.idCounter,
       type: alert.type,
@@ -70,30 +84,43 @@ export class NotificationPanelComponent implements OnInit, OnDestroy {
       read: false
     };
 
-    // Newest first
     this.notifications.unshift(notification);
 
-    // Auto-open panel on critical alerts
     if (notification.severity === 'critical') {
       this.isOpen = true;
     }
 
-    // Cap at 50 notifications
     if (this.notifications.length > 50) {
       this.notifications = this.notifications.slice(0, 50);
     }
+
+    // Auto-expire
+    // setTimeout(() => {
+    //   this.notifications = this.notifications.filter(n => n.id !== notification.id);
+    // }, 1 * 60 * 1000);
+  }
+
+  private removeAlert(type: string): void {
+    if (type.startsWith('CRISIS_')) {
+      this.notifications = this.notifications.filter(
+        n => !n.type.startsWith('CRISIS_')
+      );
+      return;
+    }
+
+    this.notifications = this.notifications.filter(n => n.type !== type);
   }
 
   private formatMessage(type: string): string {
     const messages: Record<string, string> = {
-      'HIGH_CALL_VOLUME':   '5+ poziva u posljednjih 10 minuta',
-      'RED_SPIKE':          '3+ crvena slučaja u posljednjih 10 minuta',
-      'SYSTEM_OVERLOAD':    'Visok broj poziva + kritičnih pacijenata',
-      'SLOW_BURN':          '8+ poziva u posljednjih 30 minuta',
-      'MIXED_SEVERITY':     'Visok mješoviti prioritet (crveni + žuti)',
-      'CRISIS_MODERATE':    'Krizna situacija — umjerena ozbiljnost',
-      'CRISIS_HIGH':        'Krizna situacija — visoka ozbiljnost',
-      'CRISIS_CRITICAL':    'KRITIČNA KRIZNA SITUACIJA',
+      'HIGH_CALL_VOLUME': '5+ calls in the last 10 minutes',
+      'RED_SPIKE': '3+ red-priority cases in the last 10 minutes',
+      'SYSTEM_OVERLOAD': 'High call volume + critical patients',
+      'SLOW_BURN': '8+ calls in the last 30 minutes',
+      'MIXED_SEVERITY': 'High mixed-priority load (red + yellow)',
+      'CRISIS_MODERATE': 'Crisis situation — moderate severity',
+      'CRISIS_HIGH': 'Crisis situation — high severity',
+      'CRISIS_CRITICAL': 'CRITICAL CRISIS SITUATION',
     };
     return messages[type] ?? `Sistemski alert: ${type}`;
   }

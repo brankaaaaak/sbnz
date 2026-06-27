@@ -5,6 +5,7 @@ import com.ftn.sbnz.model.models.Call;
 import com.ftn.sbnz.model.assessment.PatientAssessment;
 import com.ftn.sbnz.model.symptoms.*;
 import com.ftn.sbnz.model.facts.*;
+import com.ftn.sbnz.model.events.CallReceivedEvent;
 
 rule "Finish call - cleanup core"
 when
@@ -49,9 +50,17 @@ then
 end
 
 rule "Finish call - cleanup event"
+salience -100
 when
     $e : FinishCallEvent($callId : callId)
 then
     delete($e);
 end
 
+rule "Finish call - cleanup call received event"
+when
+    $e : FinishCallEvent($callId : callId)
+    $cre : CallReceivedEvent(callId == $callId)
+then
+    delete($cre);
+end
