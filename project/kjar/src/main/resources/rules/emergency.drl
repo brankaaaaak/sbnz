@@ -1,0 +1,203 @@
+package com.ftn.sbnz.rules;
+
+import com.ftn.sbnz.model.models.Call;
+import com.ftn.sbnz.model.models.Patient;
+import com.ftn.sbnz.model.assessment.PatientAssessment;
+import com.ftn.sbnz.model.enums.*;
+import com.ftn.sbnz.model.symptoms.StingSymptoms;
+import com.ftn.sbnz.model.facts.*;
+
+rule "Nivo1 - kreiranje assessment-a"
+no-loop true
+when
+    $call : Call($id : id)
+    not PatientAssessment(callId == $id)
+then
+    PatientAssessment pa = new PatientAssessment();
+    pa.setCallId($id);
+    insert(pa);
+    System.out.println("Kreiran assessment za poziv " + $id);
+end
+
+rule "Nivo1 - nepravilno disanje"
+no-loop true
+when
+    $call : Call($id : id, $patient : patient)
+
+    Patient(vitalSigns.breathingRegular == false) from $patient
+    $assessment : PatientAssessment(callId == $id)
+then
+    modify($assessment){ setIrregularBreathing(true) };
+    System.out.println("Nivo 1: Nepravilno disanje " + $id);
+end
+
+rule "Nivo1 - povisena temperatura"
+no-loop true
+when
+    $call : Call($id : id, $patient : patient)
+
+    Patient(vitalSigns.temperature > 37.1) from $patient
+
+    $assessment : PatientAssessment(callId == $id)
+
+then
+    modify($assessment){
+        setElevatedTemperature(true)
+    };
+
+    System.out.println("Nivo 1: Povisena temperatura " + $id);
+end
+
+rule "Nivo1 - stanje svijesti"
+no-loop true
+when
+    $call : Call($id : id, $patient : patient)
+
+    $assessment : PatientAssessment(callId == $id)
+
+    $consciousness : ConsciousnessLevel()
+        from $patient.getVitalSigns().getConsciousnessLevel()
+then
+    modify($assessment){
+        setConsciousnessLevel($consciousness)
+    };
+
+    System.out.println("Nivo 1: Stanje svijesti " + $consciousness);
+end
+
+rule "Nivo2 - STING + nesvjestan -> RED"
+when
+    $call : Call(
+        $id : id,
+        incidentType == IncidentType.STING
+    )
+
+    $assessment : PatientAssessment(
+        callId == $id,
+        consciousnessLevel != ConsciousnessLevel.CONSCIOUS
+    )
+then
+    modify($assessment){
+        setPreliminaryLevel(EmergencyLevel.RED)
+    };
+
+    System.out.println("Nivo 2: STING + nesvjestan -> RED " + $id);
+end
+
+rule "Nivo2 - STING + nepravilno disanje -> YELLOW"
+when
+    $call : Call(
+        $id : id,
+        incidentType == IncidentType.STING
+    )
+
+    $assessment : PatientAssessment(
+        callId == $id,
+        irregularBreathing == true,
+        consciousnessLevel == ConsciousnessLevel.CONSCIOUS
+    )
+then
+    modify($assessment){
+        setPreliminaryLevel(EmergencyLevel.YELLOW)
+    };
+
+    System.out.println("Nivo 2: STING + disanje -> YELLOW " + $id);
+end
+
+rule "Nivo2 - STING default -> GREEN"
+when
+    $call : Call(
+        $id : id,
+        incidentType == IncidentType.STING
+    )
+    $assessment : PatientAssessment(
+        callId == $id,
+        irregularBreathing == false,
+        consciousnessLevel == ConsciousnessLevel.CONSCIOUS
+    )
+
+then
+    modify($assessment){
+        setPreliminaryLevel(EmergencyLevel.GREEN)
+    };
+
+    System.out.println("Nivo 2: STING -> GREEN " + $id);
+end
+
+rule "Nivo3 - STING override RED (choking ili systemicSwelling)"
+when
+    $call : Call($id : id, incidentType == IncidentType.STING)
+    $assessment : PatientAssessment(callId == $id, preliminaryLevel != null, finalized == false)
+    StingSymptoms(callId == $id, (choking == true || systemicSwelling == true))
+then
+    modify($assessment){
+        setFinalLevel(EmergencyLevel.RED),
+        setFinalized(true)
+    };
+    System.out.println("Nivo 3: STING override RED (choking/systemicSwelling) za poziv " + $id);
+end
+
+rule "Nivo3 - GREEN + prethodna teska reakcija -> YELLOW"
+when
+    $call : Call($id : id, incidentType == IncidentType.STING)
+    $assessment : PatientAssessment(callId == $id, preliminaryLevel == EmergencyLevel.GREEN, finalized == false)
+    StingSymptoms(callId == $id, previousSevereReaction == true, choking == false, systemicSwelling == false)
+then
+    modify($assessment){
+        setFinalLevel(EmergencyLevel.YELLOW),
+        setFinalized(true)
+    };
+    System.out.println("Nivo 3: GREEN + anamneza -> YELLOW za poziv " + $id);
+end
+
+rule "Nivo3 - YELLOW + prethodna teska reakcija -> RED"
+when
+    $call : Call($id : id, incidentType == IncidentType.STING)
+    $assessment : PatientAssessment(callId == $id, preliminaryLevel == EmergencyLevel.YELLOW, finalized == false)
+    StingSymptoms(callId == $id, previousSevereReaction == true, choking == false, systemicSwelling == false)
+then
+    modify($assessment){
+        setFinalLevel(EmergencyLevel.RED),
+        setFinalized(true)
+    };
+    System.out.println("Nivo 3: YELLOW + anamneza -> RED za poziv " + $id);
+end
+
+rule "Nivo3 - samo skin reaction"
+when
+    $call : Call($id : id, incidentType == IncidentType.STING)
+    $assessment : PatientAssessment(callId == $id, preliminaryLevel != null, finalized == false)
+    StingSymptoms(
+        callId == $id,
+        skinReaction == true,
+        choking == false,
+        systemicSwelling == false,
+        previousSevereReaction == false
+    )
+then
+    modify($assessment){
+        setFinalLevel($assessment.getPreliminaryLevel()),
+        setFinalized(true)
+    };
+    System.out.println("Nivo 3: Zadržan preliminaryLevel " + $assessment.getPreliminaryLevel() + " za poziv " + $id);
+end
+
+rule "Nivo3 - Sting default (nema posebnih simptoma)"
+when
+    $call : Call($id : id, incidentType == IncidentType.STING)
+    $assessment : PatientAssessment(callId == $id, preliminaryLevel != null, finalized == false)
+    StingSymptoms(
+        callId == $id,
+        skinReaction == false,
+        choking == false,
+        systemicSwelling == false,
+        previousSevereReaction == false
+    )
+
+then
+    modify($assessment) {
+        setFinalLevel($assessment.getPreliminaryLevel()),
+        setFinalized(true)
+    };
+    System.out.println("Nivo 3: nema posebnih simptoma – zadržan nivo " + $assessment.getPreliminaryLevel() + " za poziv " + $id);
+end

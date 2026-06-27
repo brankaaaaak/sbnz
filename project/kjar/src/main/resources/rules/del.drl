@@ -1,0 +1,66 @@
+package com.ftn.sbnz.rules;
+
+import com.ftn.sbnz.model.events.FinishCallEvent;
+import com.ftn.sbnz.model.models.Call;
+import com.ftn.sbnz.model.assessment.PatientAssessment;
+import com.ftn.sbnz.model.symptoms.*;
+import com.ftn.sbnz.model.facts.*;
+import com.ftn.sbnz.model.events.CallReceivedEvent;
+
+rule "Finish call - cleanup core"
+when
+    $e : FinishCallEvent($callId : callId)
+    $c : Call(id == $callId)
+    $a : PatientAssessment(callId == $callId)
+then
+    delete($c);
+    delete($a);
+end
+
+rule "Finish call - cleanup head symptoms"
+when
+    $e : FinishCallEvent($callId : callId)
+    $s : InjuryHeadSymptoms(callId == $callId)
+then
+    delete($s);
+end
+
+rule "Finish call - cleanup extremity symptoms"
+when
+    $e : FinishCallEvent($callId : callId)
+    $s : InjuryExtremitySymptoms(callId == $callId)
+then
+    delete($s);
+end
+
+rule "Finish call - cleanup fainting symptoms"
+when
+    $e : FinishCallEvent($callId : callId)
+    $s : FaintingSymptoms(callId == $callId)
+then
+    delete($s);
+end
+
+rule "Finish call - cleanup sting symptoms"
+when
+    $e : FinishCallEvent($callId : callId)
+    $s : StingSymptoms(callId == $callId)
+then
+    delete($s);
+end
+
+rule "Finish call - cleanup event"
+salience -100
+when
+    $e : FinishCallEvent($callId : callId)
+then
+    delete($e);
+end
+
+rule "Finish call - cleanup call received event"
+when
+    $e : FinishCallEvent($callId : callId)
+    $cre : CallReceivedEvent(callId == $callId)
+then
+    delete($cre);
+end

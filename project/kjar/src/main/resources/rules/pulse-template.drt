@@ -1,0 +1,34 @@
+template header
+ageGroup
+minAge
+maxAge
+minPulse
+maxPulse
+
+package com.ftn.sbnz.rules;
+
+import com.ftn.sbnz.model.models.Call;
+import com.ftn.sbnz.model.models.Patient;
+import com.ftn.sbnz.model.assessment.PatientAssessment;
+import com.ftn.sbnz.model.facts.ElevatedPulse;
+
+template "pulse-check"
+
+rule "Nivo1 - povisen puls za @{ageGroup}"
+salience 100
+when
+    $call : Call($id : id, $patient : patient)
+    Patient(
+        age >= @{minAge},
+        age < @{maxAge},
+        vitalSigns.pulse > @{maxPulse}
+    ) from $patient
+    not ElevatedPulse(callId == $id)
+    $assessment : PatientAssessment(callId == $id)
+then
+    insert(new ElevatedPulse($id));
+    modify($assessment) { setElevatedPulse(true) };
+    System.out.println("Nivo1 - povisen puls za @{ageGroup}, poziv " + $id);
+end
+
+end template

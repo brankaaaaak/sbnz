@@ -1,0 +1,310 @@
+package com.ftn.sbnz.rules;
+
+import com.ftn.sbnz.model.models.Call;
+import com.ftn.sbnz.model.assessment.PatientAssessment;
+import com.ftn.sbnz.model.enums.*;
+import com.ftn.sbnz.model.facts.*;
+
+rule "Nivo2 - FAINTING + reaguje -> GREEN (reaguje + normalan puls)"
+when
+    $call : Call(
+        $id : id,
+        incidentType == IncidentType.FAINTING
+    )
+
+    $assessment : PatientAssessment(callId == $id,
+        consciousnessLevel == ConsciousnessLevel.UNCONSCIOUS_RESPONSIVE,
+        elevatedPulse == false,
+        irregularBreathing == false,
+        elevatedTemperature == false,
+        bloodPressure != BloodPressure.HYPOTENSION
+        )
+then
+    modify($assessment){
+        setPreliminaryLevel(EmergencyLevel.GREEN)
+    };
+
+    System.out.println("Nivo 2: FAINTING -> GREEN (reaguje + normalan puls) " + $id);
+end
+
+rule "Nivo2 - FAINTING + ne reaguje + normalan puls -> YELLOW"
+when
+    $call : Call(
+        $id : id,
+        incidentType == IncidentType.FAINTING
+    )
+
+    $assessment : PatientAssessment(
+        callId == $id,
+        consciousnessLevel == ConsciousnessLevel.UNCONSCIOUS_UNRESPONSIVE,
+        elevatedPulse == false,
+        irregularBreathing == false,
+        elevatedTemperature == false,
+        bloodPressure != BloodPressure.HYPOTENSION)
+then
+    modify($assessment){
+        setPreliminaryLevel(EmergencyLevel.YELLOW)
+    };
+
+    System.out.println("Nivo 2: FAINTING -> YELLOW (ne reaguje + normalan puls) " + $id);
+end
+
+rule "Nivo2 - FAINTING + reaguje + ubrzan puls i/ili nepravilno disanje -> YELLOW"
+when
+    $call : Call(
+        $id : id,
+        incidentType == IncidentType.FAINTING
+    )
+
+    $assessment : PatientAssessment(
+        callId == $id,
+        consciousnessLevel == ConsciousnessLevel.UNCONSCIOUS_RESPONSIVE,
+        (elevatedPulse == true || irregularBreathing == true),
+        elevatedTemperature == false,
+        bloodPressure != BloodPressure.HYPOTENSION)
+
+then
+    modify($assessment){
+        setPreliminaryLevel(EmergencyLevel.YELLOW)
+    };
+
+    System.out.println("Nivo 2: FAINTING -> YELLOW (reaguje + tahikardija/dispneja) " + $id);
+end
+
+rule "Nivo2 - FAINTING + ne reaguje + ubrzan puls i/ili nepravilno disanje -> RED"
+when
+    $call : Call(
+        $id : id,
+        incidentType == IncidentType.FAINTING
+    )
+
+    $assessment : PatientAssessment(
+        callId == $id,
+        consciousnessLevel == ConsciousnessLevel.UNCONSCIOUS_UNRESPONSIVE,
+        (elevatedPulse == true || irregularBreathing == true),
+        elevatedTemperature == false,
+        bloodPressure != BloodPressure.HYPOTENSION)
+
+then
+    modify($assessment){
+        setPreliminaryLevel(EmergencyLevel.RED)
+    };
+
+    System.out.println("Nivo 2: FAINTING -> RED (ne reaguje + tahikardija/dispneja) " + $id);
+end
+
+rule "Nivo2 - FAINTING + povisena temperatura -> RED"
+when
+    $call : Call(
+        $id : id,
+        incidentType == IncidentType.FAINTING
+    )
+
+    $assessment : PatientAssessment(
+        callId == $id,
+        elevatedTemperature == true
+    )
+then
+    modify($assessment){
+        setPreliminaryLevel(EmergencyLevel.RED)
+    };
+
+    System.out.println("Nivo 2: FAINTING + povisena temperatura -> RED " + $id);
+end
+
+rule "Nivo2 - FAINTING + hipotenzija -> GREEN"
+when
+    $call : Call(
+        $id : id,
+        incidentType == IncidentType.FAINTING
+    )
+
+    $assessment : PatientAssessment(
+        callId == $id,
+        bloodPressure == BloodPressure.HYPOTENSION,
+        elevatedTemperature == false
+    )
+then
+    modify($assessment){
+        setPreliminaryLevel(EmergencyLevel.GREEN)
+    };
+
+    System.out.println("Nivo 2: FAINTING + hipertenzija -> GREEN " + $id);
+end
+
+rule "Nivo3 - GREEN + dijabetes bez terapije -> YELLOW"
+when
+    $call : Call($id : id, incidentType == IncidentType.FAINTING)
+
+    $assessment : PatientAssessment(
+        callId == $id,
+        preliminaryLevel == EmergencyLevel.GREEN,
+        finalized == false
+    )
+
+    FaintingSymptoms(
+        callId == $id,
+        diabetes == true,
+        tookTherapy == false,
+        painEarlier == false
+    )
+then
+    modify($assessment){
+        setFinalLevel(EmergencyLevel.YELLOW),
+        setFinalized(true)
+    };
+
+    System.out.println("Nivo3: GREEN + dijabetes bez terapije -> YELLOW " + $id);
+end
+
+rule "Nivo3 - YELLOW + dijabetes bez terapije -> RED"
+when
+    $call : Call($id : id, incidentType == IncidentType.FAINTING)
+
+    $assessment : PatientAssessment(
+        callId == $id,
+        preliminaryLevel == EmergencyLevel.YELLOW,
+        finalized == false
+    )
+
+    FaintingSymptoms(
+        callId == $id,
+        diabetes == true,
+        tookTherapy == false,
+        painEarlier == false
+    )
+then
+    modify($assessment){
+        setFinalLevel(EmergencyLevel.RED),
+        setFinalized(true)
+    };
+
+    System.out.println("Nivo3: YELLOW + dijabetes bez terapije -> RED " + $id);
+end
+
+rule "Nivo3 - RED + dijabetes bez terapije -> RED"
+when
+    $call : Call($id : id, incidentType == IncidentType.FAINTING)
+
+    $assessment : PatientAssessment(
+        callId == $id,
+        preliminaryLevel == EmergencyLevel.RED,
+        finalized == false
+    )
+
+    FaintingSymptoms(
+        callId == $id,
+        diabetes == true,
+        tookTherapy == false,
+        painEarlier == false
+    )
+then
+    modify($assessment){
+        setFinalLevel(EmergencyLevel.RED),
+        setFinalized(true)
+    };
+
+    System.out.println("Nivo3: RED + dijabetes bez terapije -> RED " + $id);
+end
+
+rule "Nivo3 - dijabetes + terapija -> RED"
+when
+    $call : Call($id : id, incidentType == IncidentType.FAINTING)
+
+    $assessment : PatientAssessment(
+        callId == $id,
+        preliminaryLevel != null,
+        finalized == false
+    )
+
+    FaintingSymptoms(
+        callId == $id,
+        diabetes == true,
+        tookTherapy == true
+    )
+then
+    modify($assessment){
+        setFinalLevel(EmergencyLevel.RED),
+        setFinalized(true)
+    };
+
+    System.out.println("Nivo3: dijabetes + terapija -> RED " + $id);
+end
+
+rule "Nivo3 - GREEN + prethodni bol -> YELLOW"
+when
+    $call : Call($id : id, incidentType == IncidentType.FAINTING)
+
+    $assessment : PatientAssessment(
+        callId == $id,
+        preliminaryLevel == EmergencyLevel.GREEN,
+        finalized == false
+    )
+
+    FaintingSymptoms(
+        callId == $id,
+        diabetes == false,
+        tookTherapy == false,
+        painEarlier == true
+    )
+then
+    modify($assessment){
+        setFinalLevel(EmergencyLevel.YELLOW),
+        setFinalized(true)
+    };
+
+    System.out.println("Nivo3: GREEN + bol -> YELLOW " + $id);
+end
+
+rule "Nivo3 - YELLOW/RED + prethodni bol -> RED"
+when
+    $call : Call($id : id, incidentType == IncidentType.FAINTING)
+
+    $assessment : PatientAssessment(
+        callId == $id,
+        finalized == false,
+        (preliminaryLevel == EmergencyLevel.YELLOW
+            || preliminaryLevel == EmergencyLevel.RED
+        )
+    )
+
+    FaintingSymptoms(
+        callId == $id,
+        diabetes == false,
+        tookTherapy == false,
+        painEarlier == true
+    )
+then
+    modify($assessment){
+        setFinalLevel(EmergencyLevel.RED),
+        setFinalized(true)
+    };
+
+    System.out.println("Nivo3: YELLOW/RED + bol -> RED " + $id);
+end
+
+rule "Nivo3 - FAINTING default"
+when
+    $call : Call($id : id, incidentType == IncidentType.FAINTING)
+
+    $assessment : PatientAssessment(
+        callId == $id,
+        finalized == false,
+        preliminaryLevel != null
+        
+    )
+
+    FaintingSymptoms(
+        callId == $id,
+        diabetes == false,
+        tookTherapy == false,
+        painEarlier == false
+    )
+then
+    modify($assessment){
+        setFinalLevel($assessment.getPreliminaryLevel()),
+        setFinalized(true)
+    };
+
+    System.out.println("Nivo3: FAINTING default " + $id);
+end

@@ -1,0 +1,68 @@
+<div class="notif-wrapper">
+
+  <!-- Trigger button (donji desni ugao, fiksan) -->
+  <button class="notif-trigger" (click)="togglePanel()">
+    <span class="bell-icon">🔔</span>
+
+    <span class="badge" *ngIf="unreadCount > 0">
+      {{ unreadCount }}
+    </span>
+  </button>
+
+  <!-- Panel (kao Facebook chat) -->
+  <div class="notif-panel" [class.open]="isOpen">
+
+    <div class="panel-header">
+
+      <div class="header-left">
+        <span class="header-title">CEP Alerts</span>
+        <span class="header-sub" *ngIf="notifications.length > 0">
+          {{ notifications.length }} total
+        </span>
+      </div>
+
+      <div class="header-actions">
+        <button class="icon-btn" (click)="clearAll()" title="Close">
+          ✕
+        </button>
+      </div>
+
+    </div>
+
+    <div class="panel-body">
+
+      <!-- Prazno stanje -->
+      <div class="empty-state" *ngIf="notifications.length === 0">
+        <p>No active CEP alerts</p>
+      </div>
+
+      <!-- Lista notifikacija -->
+      <div
+        *ngFor="let n of notifications; trackBy: trackById"
+        class="notif-item"
+        [class.unread]="!n.read"
+        [class.severity-critical]="n.severity === 'critical'"
+        [class.severity-high]="n.severity === 'high'"
+        [class.severity-medium]="n.severity === 'medium'">
+
+        <div class="notif-icon">
+          <span *ngIf="n.severity === 'critical'">🚨</span>
+          <span *ngIf="n.severity === 'high'">⚠️</span>
+          <span *ngIf="n.severity === 'medium'">📊</span>
+        </div>
+
+        <div class="notif-content">
+          <div class="notif-type">{{ n.type }}</div>
+          <div class="notif-message">{{ n.message }}</div>
+          <div class="notif-time">{{ n.time | date: 'HH:mm:ss' }}</div>
+        </div>
+
+        <div class="unread-dot" *ngIf="!n.read"></div>
+
+      </div>
+
+    </div>
+
+  </div>
+
+</div>

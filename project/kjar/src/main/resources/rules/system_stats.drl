@@ -1,0 +1,72 @@
+package com.ftn.sbnz.rules;
+
+import com.ftn.sbnz.model.models.Call;
+import com.ftn.sbnz.model.assessment.PatientAssessment;
+import com.ftn.sbnz.model.stats.SystemStats;
+import com.ftn.sbnz.model.enums.EmergencyLevel;
+import com.ftn.sbnz.model.enums.Status;
+
+// INICIJALIZACIJA SystemStats 
+// Ubacuje se jednom, čim postoji bar jedan Call u working memory.
+
+rule "SystemStats - inicijalizacija"
+salience 300
+no-loop true
+when
+    exists Call()
+    not SystemStats()
+then
+    insert(new SystemStats());
+    System.out.println("SystemStats inicijalizovan.");
+end
+
+// ACCUMULATE 1: Brojanje aktivnih poziva
+//
+// Broji sve Call objekte čiji je status IN_PROGRESS.
+// Rezultat se upisuje u SystemStats.activeCallCount.
+//
+// Okida se svaki put kada se promijeni bilo koji Call u working memory
+// (insert/modify/retract), zahvaljujući accumulate-u koji prati skup.
+
+rule "SystemStats - brojanje aktivnih poziva"
+salience 100
+no-loop true
+when
+    $stats : SystemStats()
+    $activeCount : Long() from accumulate(
+        Call(status == Status.IN_PROGRESS),
+        count(1)
+    )
+then
+    modify($stats) {
+        setActiveCallCount($activeCount)
+    };
+    System.out.println("SystemStats: aktivnih poziva = " + $activeCount);
+end
+
+// ACCUMULATE 3: Brojanje slučajeva prvog stepena prioriteta (RED)
+//
+// Broji sve nefinalizirane pozive čiji je finalLevel == RED.
+// RED označava najviši (prvi) stepen prioriteta u sistemu trijaze.
+
+rule "SystemStats - brojanje RED prioriteta"
+salience 100
+no-loop true
+when
+    $stats : SystemStats()
+    $redCount : Long() from accumulate(
+        $call : Call($cid : id, status == Status.IN_PROGRESS)
+        and
+        PatientAssessment(
+            callId == $cid,
+            finalized == true,
+            finalLevel == EmergencyLevel.RED
+        ),
+        count(1)
+    )
+then
+    modify($stats) {
+        setRedLevelCount($redCount)
+    };
+    System.out.println("SystemStats: RED prioritet (1. stepen) = " + $redCount);
+end

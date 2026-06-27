@@ -1,0 +1,190 @@
+<div class="container">
+
+  <div class="form-box">
+
+    <h2>New Emergency Call</h2>
+
+    <!-- STEP 1 -->
+    <div *ngIf="step === 1" class="step">
+
+      <h3>Patient Information</h3>
+
+        <div class="field">
+        <label>Patient Name</label>
+        <input
+            type="text"
+            placeholder="Enter name"
+            [(ngModel)]="call.patient.name">
+        </div>
+
+        <div class="field">
+        <label>Age</label>
+        <input
+            type="number"
+            placeholder="Enter age"
+            [(ngModel)]="call.patient.age">
+        </div>
+        <div class="field">
+        <label>Location</label>
+        <input
+            type="text"
+            placeholder="Enter location"
+            [(ngModel)]="call.location">
+        </div>
+
+      <div class="buttons">
+        <div></div>
+        <button (click)="step = 2">Next</button>
+      </div>
+
+    </div>
+
+    <!-- STEP 2 -->
+    <div *ngIf="step === 2" class="step">
+
+      <h3>Vital Signs</h3>
+
+      <div class="field">
+        <label>Pulse (bpm)</label>
+        <input
+            type="number"
+            placeholder="Enter pulse"
+            [(ngModel)]="call.patient.vitalSigns.pulse">
+        </div>
+
+        <div class="field">
+        <label>Systolic Pressure (mmHg)</label>
+        <input
+            type="number"
+            placeholder="Enter systolic pressure"
+            [(ngModel)]="call.patient.vitalSigns.systolicPressure">
+        </div>
+
+        <div class="field">
+        <label>Diastolic Pressure (mmHg)</label>
+        <input
+            type="number"
+            placeholder="Enter diastolic pressure"
+            [(ngModel)]="call.patient.vitalSigns.diastolicPressure">
+        </div>
+
+        <div class="field">
+        <label>Temperature (°C)</label>
+        <input
+            type="number"
+            step="0.1"
+            placeholder="Enter temperature"
+            [(ngModel)]="call.patient.vitalSigns.temperature">
+        </div>
+
+      <div class="checkbox-row">
+        <input
+            type="checkbox"
+            [(ngModel)]="call.patient.vitalSigns.breathingRegular">
+
+        <span>Regular Breathing</span>
+      </div>
+
+      <select [(ngModel)]="call.patient.vitalSigns.consciousnessLevel">
+        <option value="" disabled selected>
+          Select consciousness level
+        </option>
+
+        <option *ngFor="let c of consciousnessLevels" [value]="c">
+          {{ c }}
+        </option>
+      </select>
+
+      <div class="buttons">
+        <button (click)="step = 1">Back</button>
+        <button (click)="step = 3">Next</button>
+      </div>
+
+    </div>
+
+    <!-- STEP 3 -->
+    <div *ngIf="step === 3" class="step">
+
+      <h3>Incident Type</h3>
+
+      <select [(ngModel)]="call.incidentType">
+        <option value="" disabled selected>
+          Select incident type
+        </option>
+
+        <option *ngFor="let i of incidentTypes" [value]="i">
+          {{ i }}
+        </option>
+      </select>
+
+      <div class="buttons">
+        <button (click)="step = 2">Back</button>
+        <button (click)="submit()">Submit Case</button>
+      </div>
+
+    </div>
+
+    <!-- STEP 4 -->
+    <div *ngIf="step === 4">
+
+      <h2>Preliminary Assessment</h2>
+
+      <h1>{{ preliminaryResult?.preliminaryLevel }}</h1>
+
+      <ul>
+        <li *ngFor="let reason of preliminaryResult?.reasons">
+          {{ reason }}
+        </li>
+      </ul>
+
+      <button (click)="loadSymptoms()">
+        Continue to symptoms
+      </button>
+
+    </div>
+
+    <!-- STEP 5 -->
+    <div *ngIf="step === 5" class="step">
+
+      <h3>Symptoms</h3>
+
+      <p>Fill symptoms for {{ call.incidentType }}</p>
+
+      <div class="symptom-grid">
+
+        <div class="symptom-box" *ngFor="let f of symptomSchema">
+
+          <label>
+            <input type="checkbox"
+                  [(ngModel)]="symptomValues[f.key]">
+
+            {{ f.label }}
+          </label>
+
+        </div>
+
+      </div>
+
+      <div class="buttons">
+        <button (click)="step = 4">Back</button>
+        <button (click)="submitSymptoms()">Continue</button>
+      </div>
+
+    </div>
+
+    <!-- STEP 6 -->
+    <div *ngIf="step === 6" class="step">
+
+      <h2>Final Assessment</h2>
+
+      <h1>{{ finalResult?.finalLevel }}</h1>
+
+      <button routerLink="/dashboard">
+        Back
+      </button>
+
+    </div>
+
+  </div>
+
+</div>
